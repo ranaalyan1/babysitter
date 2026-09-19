@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.test0/memory.json
+.test0/task-history.json
+.test0/artifacts/
+*.log
+.DS_Store

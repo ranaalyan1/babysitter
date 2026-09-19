@@ -1,0 +1,23 @@
+{
+  "name": "@test0/cli",
+  "version": "5.0.0",
+  "description": "test0 V5 developer CLI",
+  "type": "module",
+  "bin": {
+    "test0": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/index.js",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@test0/core": "*",
+    "commander": "^15.0.0",
+    "chalk": "^6.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "rimraf": "^6.0.1",
+    "@types/node": "^22.0.0"
+  }
+}

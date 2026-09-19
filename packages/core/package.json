@@ -1,0 +1,24 @@
+{
+  "name": "@test0/core",
+  "version": "5.0.0",
+  "description": "test0 V5 core: model gateway, router, skills, tools, orchestrator, memory, security",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "rimraf": "^6.0.1",
+    "@types/node": "^22.0.0"
+  }
+}

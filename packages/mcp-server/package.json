@@ -1,0 +1,23 @@
+{
+  "name": "@test0/mcp-server",
+  "version": "5.0.0",
+  "description": "test0 V5 MCP server — expose test0 capabilities to any MCP-compatible client",
+  "type": "module",
+  "bin": {
+    "test0-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/index.js",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@test0/core": "*",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "rimraf": "^6.0.1",
+    "@types/node": "^22.0.0"
+  }
+}
