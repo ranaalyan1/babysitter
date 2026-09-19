@@ -58,8 +58,30 @@ packages/
                 agents, memory, run, config, connect).
   mcp-server/   MCP server exposing test0 to any MCP-compatible client
                 (Claude Code, Cursor, Codex, ...).
+  repairgate/   Standalone repair-and-escalation daemon for pointing a
+                coding tool at weak/free LLMs. See
+                packages/repairgate/README.md and
+                packages/repairgate/docs/ARCHITECTURE.md.
 skills/         Installable SKILL.md skills (spec-compliant).
 docs/           Architecture and usage documentation.
+```
+
+### repairgate
+
+`repairgate` is a separate product that lives in this monorepo:
+a stateful repair-and-escalation daemon you point a coding tool
+(Cursor/Claude Code/Codex) at, with the worst free model sitting behind
+it. It validates and heals every tool call against its schema, silently
+escalates a step to a stronger model after repeated failures, tracks
+free-tier quota across a whole task, and normalizes OpenAI/Anthropic/
+Responses-API dialects — all without the calling tool ever seeing the
+underlying model's raw mistakes. See
+[`packages/repairgate/README.md`](packages/repairgate/README.md) for
+usage and [`packages/repairgate/docs/ARCHITECTURE.md`](packages/repairgate/docs/ARCHITECTURE.md)
+for the full design and OSS precedent.
+
+```bash
+node packages/repairgate/dist/cli.js serve --demo
 ```
 
 ## Quick start

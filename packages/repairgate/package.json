@@ -1,0 +1,29 @@
+{
+  "name": "@test0/repairgate",
+  "version": "0.1.0",
+  "description": "A stateful repair-and-escalation daemon that sits between a coding tool and free/weak LLMs and makes them produce competent agentic tool output.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "bin": {
+    "repairgate": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
+    "clean": "rimraf dist",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@test0/core": "*",
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.6.0",
+    "vitest": "^5.0.1"
+  }
+}

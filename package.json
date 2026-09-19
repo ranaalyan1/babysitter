@@ -26,11 +26,13 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @test0/core && npm run build -w @test0/cli && npm run build -w @test0/mcp-server",
+    "build": "npm run build -w @test0/core && npm run build -w @test0/cli && npm run build -w @test0/mcp-server && npm run build -w @test0/repairgate",
     "clean": "npm run clean --workspaces --if-present",
     "test0": "node packages/cli/dist/index.js",
+    "repairgate": "node packages/repairgate/dist/cli.js",
     "dev:cli": "npm run build -w @test0/core && npm run build -w @test0/cli && node packages/cli/dist/index.js",
     "dev:mcp": "npm run build -w @test0/core && npm run build -w @test0/mcp-server && node packages/mcp-server/dist/index.js",
+    "dev:repairgate": "npm run build -w @test0/core && npm run build -w @test0/repairgate && node packages/repairgate/dist/cli.js serve --demo",
     "test": "npm run test --workspaces --if-present",
     "lint": "eslint packages",
     "format": "prettier --write \"packages/**/*.ts\" \"*.md\" \"docs/**/*.md\""
