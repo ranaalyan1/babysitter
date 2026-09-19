@@ -43,6 +43,8 @@ that are already proven in production, open-source systems:
 | Tools | [Model Context Protocol](https://modelcontextprotocol.io) | Consume the existing MCP server ecosystem instead of rebuilding GitHub/DB/browser integrations one by one |
 | Agents | [CrewAI](https://github.com/crewAIInc/crewAI) | Role/goal/backstory agent definitions, dependency-aware step execution |
 | Config | LiteLLM `proxy_config.yaml`, Claude/Cursor `mcpServers` | One declarative `test0.config.yaml` for routing policy, permissions, and MCP servers |
+| Observability | [Langfuse](https://langfuse.com) (OTel-native tracing) | Nested trace → span model for every orchestration run, model call, and agent step; exportable as OTel-shaped JSON |
+| Budgets & rate limits | [LiteLLM](https://docs.litellm.ai/docs/proxy/customer_usage) | Per-model `rpm`/`tpm`/`maxBudgetUsd` caps enforced before routing, with a spend-log-style usage summary |
 
 ## Monorepo layout
 
@@ -80,6 +82,10 @@ node packages/cli/dist/index.js models bench
 # Run an orchestrated, multi-agent task
 node packages/cli/dist/index.js run "Build a Python bioinformatics pipeline, test it, and write docs"
 
+# Inspect the Langfuse/OTel-style trace it just recorded, and per-model spend
+node packages/cli/dist/index.js traces
+node packages/cli/dist/index.js traces usage
+
 # Start the MCP server (stdio) so Claude Code / Cursor / Codex can connect
 node packages/mcp-server/dist/index.js
 ```
@@ -99,10 +105,14 @@ intelligent router with policy-based ranking, per-model circuit breakers,
 and bounded retries; a spec-compliant skill loader with validation; a
 tool gateway with native MCP-server support; a permission/audit system;
 file-backed memory with budgeted context assembly; a dynamic planner and
-concurrent multi-agent orchestrator; declarative YAML configuration; and
-an MCP server. 25 automated tests cover routing/fallback, circuit
-breaking, skill validation, permissions, planning, and config
-backward-compatibility (`npm test`); CI runs on Node 18/20/22.
+concurrent multi-agent orchestrator; declarative YAML configuration;
+Langfuse/OpenTelemetry-style nested tracing across every orchestration
+run, agent step, and model call (`test0 traces`); LiteLLM-style
+per-model `rpm`/`tpm`/spend budget enforcement wired into the router's
+candidate selection (`test0 traces usage`); and an MCP server. 36
+automated tests cover routing/fallback, circuit breaking, skill
+validation, permissions, planning, tracing, budget enforcement, and
+config backward-compatibility (`npm test`); CI runs on Node 18/20/22.
 
 Model providers ship with deterministic simulated completions so the
 whole pipeline runs offline without API keys; wire in real provider HTTP

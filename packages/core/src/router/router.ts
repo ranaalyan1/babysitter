@@ -10,6 +10,9 @@ import { ModelProviderError } from "../types/index.js";
 import { ModelGateway } from "../models/gateway.js";
 import type { BenchmarkStore } from "../benchmark/store.js";
 import { HealthTracker, type HealthTrackerOptions } from "./health.js";
+import { BudgetManager } from "../budget/limiter.js";
+import { Tracer, type Trace } from "../observability/tracer.js";
+import { estimateTokens } from "../models/providers/base.js";
 
 export interface RouterOptions {
   policy?: RoutingPolicy;
@@ -19,6 +22,10 @@ export interface RouterOptions {
   retriesPerCandidate?: number;
   /** Base delay for exponential backoff between retries, in ms. Default 200ms. */
   retryBackoffMs?: number;
+  /** LiteLLM-style rpm/tpm/spend enforcement, shared across router instances if provided. */
+  budget?: BudgetManager;
+  /** Langfuse/OTel-style tracer; when provided, every route() call emits a trace + model spans. */
+  tracer?: Tracer;
 }
 
 /**
@@ -51,6 +58,8 @@ export class ModelRouter {
   private readonly health: HealthTracker;
   private readonly retriesPerCandidate: number;
   private readonly retryBackoffMs: number;
+  readonly budget: BudgetManager;
+  private readonly tracer?: Tracer;
 
   constructor(private readonly gateway: ModelGateway, options: RouterOptions = {}) {
     this.policy = options.policy ?? "quality-first";
@@ -58,6 +67,8 @@ export class ModelRouter {
     this.health = new HealthTracker(options.health);
     this.retriesPerCandidate = options.retriesPerCandidate ?? 1;
     this.retryBackoffMs = options.retryBackoffMs ?? 200;
+    this.budget = options.budget ?? new BudgetManager();
+    this.tracer = options.tracer;
   }
 
   setPolicy(policy: RoutingPolicy): void {
@@ -93,6 +104,7 @@ export class ModelRouter {
     const filtered: ModelDescriptor[] = [];
     for (const m of candidates) {
       if (this.health.isOpen(m.id)) continue; // circuit breaker: recently failing repeatedly
+      if (!this.budget.canProceed(m.id).allowed) continue; // rpm/tpm/spend cap reached
       if (!availability.has(m.provider)) {
         availability.set(m.provider, await this.gateway.checkAvailability(m.provider));
       }
@@ -157,7 +169,8 @@ export class ModelRouter {
    */
   async route(
     request: ModelRequest,
-    requirements: RoutingRequirements
+    requirements: RoutingRequirements,
+    traceContext?: { trace: Trace; parentSpanId?: string }
   ): Promise<{ response: ModelResponse; decision: RoutingDecision }> {
     const candidates = await this.selectCandidates(requirements);
     if (candidates.length === 0) {
@@ -169,7 +182,7 @@ export class ModelRouter {
     const attempted: RoutingDecision["attempted"] = [];
 
     for (const candidate of candidates) {
-      const outcome = await this.tryCandidateWithRetries(candidate, request);
+      const outcome = await this.tryCandidateWithRetries(candidate, request, traceContext);
       if (outcome.ok) {
         attempted.push({ modelId: candidate.id, outcome: "success" });
         const decision: RoutingDecision = {
@@ -192,15 +205,37 @@ export class ModelRouter {
 
   private async tryCandidateWithRetries(
     candidate: ModelDescriptor,
-    request: ModelRequest
+    request: ModelRequest,
+    traceContext?: { trace: Trace; parentSpanId?: string }
   ): Promise<{ ok: true; response: ModelResponse } | { ok: false; kind: "rate-limited" | "unavailable" | "error" }> {
     let lastKind: "rate-limited" | "unavailable" | "error" = "error";
+    const estimatedTokens = estimateTokens(request.messages.map((m) => m.content).join("\n"));
 
     for (let attempt = 0; attempt <= this.retriesPerCandidate; attempt++) {
+      const budgetCheck = this.budget.canProceed(candidate.id, estimatedTokens);
+      if (!budgetCheck.allowed) {
+        lastKind = "rate-limited";
+        this.health.recordFailure(candidate.id, budgetCheck.reason ?? "budget/rate limit");
+        break;
+      }
+
+      const handle = traceContext?.trace
+        ? this.tracer?.startSpan(traceContext.trace, `model:${candidate.id}`, "model", {
+            parentSpanId: traceContext.parentSpanId,
+            input: request.messages[request.messages.length - 1]?.content,
+          })
+        : undefined;
+
       const start = Date.now();
       try {
         const response = await this.gateway.complete(candidate.id, request);
         this.health.recordSuccess(candidate.id, Date.now() - start);
+        this.budget.record(candidate.id, response.usage.inputTokens + response.usage.outputTokens, response.usage.costUsd);
+        handle?.end({
+          output: response.content,
+          usage: { inputTokens: response.usage.inputTokens, outputTokens: response.usage.outputTokens, costUsd: response.usage.costUsd },
+          attributes: { modelId: candidate.id, provider: candidate.provider, attempt },
+        });
         return { ok: true, response };
       } catch (err) {
         const isProviderError = err instanceof ModelProviderError;
@@ -212,7 +247,9 @@ export class ModelRouter {
               : "error"
           : "error";
         lastKind = kind;
-        this.health.recordFailure(candidate.id, err instanceof Error ? err.message : String(err));
+        const message = err instanceof Error ? err.message : String(err);
+        this.health.recordFailure(candidate.id, message);
+        handle?.end({ error: message, attributes: { modelId: candidate.id, provider: candidate.provider, attempt } });
 
         // Rate limits and hard unavailability rarely resolve within a few
         // hundred ms, so don't burn retry budget on them — fail straight

@@ -35,3 +35,6 @@ export { Test0Runtime, type Test0RuntimeOptions } from "./runtime.js";
 export { HealthTracker, type HealthSnapshot, type HealthTrackerOptions } from "./router/health.js";
 export { loadFileConfig, CONFIG_FILE_NAMES } from "./config/loader.js";
 export { EXAMPLE_CONFIG_YAML, normalizeMcpServers, type Test0FileConfig } from "./config/schema.js";
+
+export { BudgetManager, type RateLimitConfig, type BudgetCheckResult } from "./budget/limiter.js";
+export { Tracer, toOtlpLikeJson, type Trace, type Span, type SpanKind, type SpanStatus, type ActiveSpanHandle } from "./observability/tracer.js";

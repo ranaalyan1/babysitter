@@ -12,12 +12,14 @@ import { SkillRegistry } from "../skills/loader.js";
 import { ToolGateway } from "../tools/gateway.js";
 import { TaskPlanner } from "./planner.js";
 import { DEFAULT_AGENTS, findAgentForRole } from "./agents.js";
+import { Tracer } from "../observability/tracer.js";
 
 export interface OrchestratorOptions {
   agents?: AgentDefinition[];
   projectScope?: string;
   /** How many independent (dependency-satisfied) steps may run at once. Default 3. */
   maxConcurrency?: number;
+  tracer?: Tracer;
 }
 
 /**
@@ -30,12 +32,19 @@ export interface OrchestratorOptions {
  * strictly linear crew, independent steps (e.g. two research branches
  * with no shared dependency) run concurrently up to `maxConcurrency`,
  * closer to how a real team would parallelize a wave of ready work.
+ *
+ * Every run is wrapped in a Langfuse/OpenTelemetry-shaped trace: one
+ * `orchestration` root span for the whole goal, one `agent` span per
+ * plan step, and nested `model` spans (emitted by `ModelRouter`) for
+ * every model call inside that step — so a failed or slow run can be
+ * inspected span-by-span instead of only reading the final report.
  */
 export class Orchestrator {
   private readonly agents: AgentDefinition[];
   private readonly projectScope: string;
   private readonly maxConcurrency: number;
   private readonly planner = new TaskPlanner();
+  private readonly tracer?: Tracer;
 
   constructor(
     private readonly router: ModelRouter,
@@ -48,11 +57,13 @@ export class Orchestrator {
     this.agents = options.agents ?? DEFAULT_AGENTS;
     this.projectScope = options.projectScope ?? "default";
     this.maxConcurrency = options.maxConcurrency ?? 3;
+    this.tracer = options.tracer;
   }
 
   async run(goal: string): Promise<OrchestrationResult> {
     const plan = this.planner.plan(goal);
     const stepResults: StepResult[] = [];
+    const trace = this.tracer?.startTrace(`orchestration: ${goal.slice(0, 80)}`, { goal });
 
     const isSatisfied = (step: PlanStep) =>
       step.dependsOn.every((depId) => plan.steps.find((d) => d.id === depId)?.status === "done");
@@ -71,7 +82,7 @@ export class Orchestrator {
       // there's no reason a research step and an unrelated planning step
       // should serialize just because the orchestrator is sequential
       // about dependency order.
-      const results = await Promise.all(runnable.map((step) => this.executeStep(step, plan, stepResults)));
+      const results = await Promise.all(runnable.map((step) => this.executeStep(step, plan, stepResults, trace)));
 
       for (let i = 0; i < runnable.length; i++) {
         const step = runnable[i];
@@ -92,16 +103,27 @@ export class Orchestrator {
       ["orchestration"]
     );
 
-    return { goal, plan, stepResults, finalReport, success };
+    if (trace && this.tracer) await this.tracer.endTrace(trace);
+
+    return { goal, plan, stepResults, finalReport, success, traceId: trace?.id };
   }
 
-  private async executeStep(step: PlanStep, plan: ExecutionPlan, priorResults: StepResult[]): Promise<StepResult> {
+  private async executeStep(
+    step: PlanStep,
+    plan: ExecutionPlan,
+    priorResults: StepResult[],
+    trace?: import("../observability/tracer.js").Trace
+  ): Promise<StepResult> {
     const agent = findAgentForRole(step.assignedRole, this.agents);
     const agentSkills = agent.skills
       .map((name) => this.skills.get(name))
       .filter((s): s is NonNullable<typeof s> => Boolean(s));
 
     const persona = [agent.backstory, agent.goal ? `Your goal: ${agent.goal}` : undefined].filter(Boolean).join(" ");
+
+    const agentSpan = trace
+      ? this.tracer?.startSpan(trace, `${agent.id}: ${step.description}`, "agent", { input: step.description })
+      : undefined;
 
     const assembled = await this.context.assemble({
       task:
@@ -115,7 +137,8 @@ export class Orchestrator {
     try {
       const { response, decision } = await this.router.route(
         { messages: assembled.messages, taskType: step.taskType },
-        { taskType: step.taskType, requireToolUse: agent.tools.length > 0 }
+        { taskType: step.taskType, requireToolUse: agent.tools.length > 0 },
+        trace ? { trace, parentSpanId: agentSpan?.span.id } : undefined
       );
 
       await this.memory.remember(
@@ -126,6 +149,8 @@ export class Orchestrator {
         ["step-result", step.assignedRole]
       );
 
+      agentSpan?.end({ output: response.content, attributes: { modelUsed: decision.chosen.id, agentRole: step.assignedRole } });
+
       return {
         stepId: step.id,
         agentId: agent.id,
@@ -135,11 +160,13 @@ export class Orchestrator {
         toolsUsed: agent.tools,
       };
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      agentSpan?.end({ error: message, attributes: { agentRole: step.assignedRole } });
       return {
         stepId: step.id,
         agentId: agent.id,
         status: "failed",
-        summary: err instanceof Error ? err.message : String(err),
+        summary: message,
       };
     }
   }

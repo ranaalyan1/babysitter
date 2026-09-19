@@ -170,11 +170,50 @@ an interactive request.
   directly as comparator chains in `router/router.ts`, plus `cheapest`
   and `fastest` as additional user-selectable policies.
 
+## Observability (tracing) and Budgets/Rate limits
+
+- `observability/tracer.ts` — `Tracer`, modeled on how
+  [Langfuse](https://langfuse.com) (an OTel-native LLM observability
+  platform) and OpenTelemetry structure traces: a `Trace` is one
+  end-to-end unit of work (an orchestration `run()`), containing nested
+  `Span`s — one `agent`-kind span per orchestrator step, one
+  `model`-kind span per model call inside it — each carrying
+  start/end time, status, token/cost usage, and attributes. Traces are
+  kept in memory during a process and, when `tracingEnabled` is on,
+  appended as JSONL to `.test0/traces/traces.jsonl` (one line per
+  completed trace), deliberately as plain JSON rather than requiring a
+  running collector. `toOtlpLikeJson()` renders a trace as an
+  OpenTelemetry-shaped span list so it can be forwarded to a real OTel
+  collector or Langfuse's OTel endpoint later without test0 depending on
+  the OTel SDK. `Tracer.usageSummary()` aggregates cost/latency/error
+  counts per model across persisted traces, mirroring LiteLLM's
+  spend-logs table.
+- `budget/limiter.ts` — `BudgetManager`, modeled on
+  [LiteLLM's](https://docs.litellm.ai/docs/proxy/customer_usage)
+  per-deployment `rpm`/`tpm` limits and per-key/team spend budgets:
+  enforces independent **rpm** (sliding 60s request-count window),
+  **tpm** (sliding 60s token-count window — tracked separately from rpm
+  because a single agentic call can carry many thousands of tokens),
+  and **maxBudgetUsd** (lifetime spend cap) per model id, with `"*"` as
+  a wildcard default. `canProceed()` is a pre-call check the router
+  consults inside `selectCandidates()` to skip any model already at its
+  limit (LiteLLM's `optional_pre_call_checks` shape); `record()` is a
+  post-call accounting hook fed the actual token/cost usage returned by
+  the provider.
+- Both are wired end to end: `Test0Runtime` builds one `Tracer` and one
+  `BudgetManager` per workspace (limits loaded from `test0.config.yaml`'s
+  `budgets` section) and injects them into both `ModelRouter` and
+  `Orchestrator`; `Orchestrator.run()` starts a root trace and returns
+  its id as `OrchestrationResult.traceId`.
+
 ## 17. CLI
 
 `packages/cli` implements `test0 init|connect|models|skills|tools|
-agents|memory|run|config` using Commander, all operating on the same
-`Test0Runtime`.
+agents|memory|run|config|traces` using Commander, all operating on the
+same `Test0Runtime`. `test0 traces [list]` lists recorded traces,
+`test0 traces show <id>` prints every span in one, and `test0 traces
+usage` prints the LiteLLM-style per-model spend/latency/error summary
+plus live rpm/tpm/spend budget state for the current process.
 
 ## 18. MCP Interface
 
@@ -203,8 +242,9 @@ without needing to understand its internals.
 
 - `workspace/workspace.ts` — `Workspace.init/open` manages a project's
   `.test0/` directory: `config.json` (routing policy, permission rules,
-  enabled skills/providers, configured MCP servers), `memory.json`,
-  `task-history.json`, and an `artifacts/` directory.
+  enabled skills/providers, configured MCP servers, per-model budgets,
+  tracing on/off), `memory.json`, `task-history.json`, an `artifacts/`
+  directory, and a `traces/` directory holding `traces.jsonl`.
 
 ## What's simulated vs. real
 

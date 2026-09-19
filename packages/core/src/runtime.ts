@@ -16,6 +16,8 @@ import { ContextManager } from "./memory/context.js";
 import { Orchestrator } from "./orchestrator/orchestrator.js";
 import { Workspace, type WorkspaceConfig } from "./workspace/workspace.js";
 import { McpServerConnection } from "./tools/mcp-client.js";
+import { BudgetManager } from "./budget/limiter.js";
+import { Tracer } from "./observability/tracer.js";
 import type { ModelProvider, RoutingPolicy } from "./types/index.js";
 
 export interface Test0RuntimeOptions {
@@ -46,6 +48,8 @@ export class Test0Runtime {
   readonly memory: MemoryStore;
   readonly context: ContextManager;
   readonly orchestrator: Orchestrator;
+  readonly budget: BudgetManager;
+  readonly tracer: Tracer;
   private readonly mcpConnections: McpServerConnection[] = [];
 
   private constructor(
@@ -59,12 +63,22 @@ export class Test0Runtime {
     }
 
     this.benchmarks = new BenchmarkStore(this.gateway);
+
+    this.budget = new BudgetManager();
+    for (const [modelId, limit] of Object.entries(config.budgets)) {
+      this.budget.setLimit(modelId, limit);
+    }
+
+    this.tracer = new Tracer(config.tracingEnabled ? workspace.tracesDir : undefined);
+
     this.router = new ModelRouter(this.gateway, {
       policy: routingPolicy,
       benchmarkStore: this.benchmarks,
       retriesPerCandidate: config.router.retriesPerCandidate,
       retryBackoffMs: config.router.retryBackoffMs,
       health: { allowedFails: config.router.allowedFails, cooldownMs: config.router.cooldownMs },
+      budget: this.budget,
+      tracer: this.tracer,
     });
 
     const skillDirs = [join(workspace.rootDir, "..", "skills"), ...config.skillPaths];
@@ -83,6 +97,7 @@ export class Test0Runtime {
     this.orchestrator = new Orchestrator(this.router, this.context, this.memory, this.skills, this.tools, {
       projectScope: workspace.rootDir,
       maxConcurrency: config.orchestrator.maxConcurrency,
+      tracer: this.tracer,
     });
   }
 

@@ -342,6 +342,8 @@ export interface OrchestrationResult {
   stepResults: StepResult[];
   finalReport: string;
   success: boolean;
+  /** Identifier of the Langfuse/OTel-shaped trace recorded for this run, if a tracer was configured. */
+  traceId?: string;
 }
 
 // ---------------------------------------------------------------------------

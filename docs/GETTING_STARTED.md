@@ -46,6 +46,9 @@ test0 config                          # view merged workspace config
 test0 config permission terminal.execute allow   # change a permission rule
 test0 connect                         # check provider + MCP server connectivity
 test0 run "Build a Python bioinformatics pipeline, test it, and write docs"
+test0 traces                          # list recorded orchestration traces
+test0 traces show <traceId>           # inspect every span in one trace
+test0 traces usage                    # per-model spend/latency/errors + live rpm/tpm budget state
 ```
 
 ## Declarative configuration
@@ -73,10 +76,28 @@ mcpServers:
     args: ["-y", "@modelcontextprotocol/server-github"]
     env:
       GITHUB_PERSONAL_ACCESS_TOKEN: "${GITHUB_TOKEN}"
+
+# LiteLLM-style per-model rpm/tpm/spend caps, enforced before routing.
+# "*" applies to every model; a specific model id overrides it.
+budgets:
+  "*":
+    rpm: 60
+    tpm: 100000
+  deepseek-r1:
+    maxBudgetUsd: 5.00
+
+# Record a Langfuse/OpenTelemetry-shaped trace (nested spans per agent
+# step and model call) to .test0/traces/traces.jsonl on every `run`.
+tracingEnabled: true
 ```
 
 `.test0/config.json` remains the mutable runtime state; `test0.config.yaml`
 is layered on top of it every time the workspace loads.
+
+A model that hits its `rpm`/`tpm`/`maxBudgetUsd` cap is transparently
+excluded from routing (like any other unhealthy candidate) until its
+sliding 60s window clears, so a misbehaving loop degrades to a fallback
+model instead of blowing through a real provider's rate limit.
 
 `test0 run` is the full orchestration path: it plans dynamic steps,
 assigns specialized agents (planner/coder/researcher/reviewer/tester),

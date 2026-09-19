@@ -5,6 +5,12 @@ import { DEFAULT_PERMISSION_RULES } from "../security/permissions.js";
 import { loadFileConfig } from "../config/loader.js";
 import type { Test0FileConfig } from "../config/schema.js";
 
+export interface ModelBudgetConfig {
+  rpm?: number;
+  tpm?: number;
+  maxBudgetUsd?: number;
+}
+
 export interface WorkspaceConfig {
   projectName: string;
   routingPolicy: RoutingPolicy;
@@ -15,6 +21,10 @@ export interface WorkspaceConfig {
   skillPaths: string[];
   orchestrator: { maxConcurrency: number };
   router: { retriesPerCandidate: number; retryBackoffMs: number; allowedFails: number; cooldownMs: number };
+  /** Per-model rpm/tpm/spend caps, LiteLLM-style. Keyed by model id; "*" applies to every model. */
+  budgets: Record<string, ModelBudgetConfig>;
+  /** Whether to record Langfuse/OTel-shaped traces under .test0/traces/. */
+  tracingEnabled: boolean;
 }
 
 const DEFAULT_CONFIG: Omit<WorkspaceConfig, "projectName"> = {
@@ -26,6 +36,8 @@ const DEFAULT_CONFIG: Omit<WorkspaceConfig, "projectName"> = {
   skillPaths: [],
   orchestrator: { maxConcurrency: 3 },
   router: { retriesPerCandidate: 1, retryBackoffMs: 200, allowedFails: 3, cooldownMs: 30_000 },
+  budgets: {},
+  tracingEnabled: true,
 };
 
 /**
@@ -47,7 +59,8 @@ export class Workspace {
     public readonly configPath: string,
     public readonly memoryPath: string,
     public readonly artifactsDir: string,
-    public readonly taskHistoryPath: string
+    public readonly taskHistoryPath: string,
+    public readonly tracesDir: string
   ) {}
 
   static paths(projectDir: string) {
@@ -58,6 +71,7 @@ export class Workspace {
       memoryPath: join(rootDir, "memory.json"),
       artifactsDir: join(rootDir, "artifacts"),
       taskHistoryPath: join(rootDir, "task-history.json"),
+      tracesDir: join(rootDir, "traces"),
     };
   }
 
@@ -65,6 +79,7 @@ export class Workspace {
     const p = Workspace.paths(projectDir);
     await mkdir(p.rootDir, { recursive: true });
     await mkdir(p.artifactsDir, { recursive: true });
+    await mkdir(p.tracesDir, { recursive: true });
 
     const fileConfig = await loadFileConfig(projectDir);
     const config = mergeFileConfig({ projectName, ...DEFAULT_CONFIG }, fileConfig);
@@ -72,7 +87,7 @@ export class Workspace {
     await writeFile(p.memoryPath, "[]", "utf-8");
     await writeFile(p.taskHistoryPath, "[]", "utf-8");
 
-    return new Workspace(projectDir, p.rootDir, p.configPath, p.memoryPath, p.artifactsDir, p.taskHistoryPath);
+    return new Workspace(projectDir, p.rootDir, p.configPath, p.memoryPath, p.artifactsDir, p.taskHistoryPath, p.tracesDir);
   }
 
   static async open(projectDir: string): Promise<Workspace | undefined> {
@@ -83,7 +98,8 @@ export class Workspace {
       return undefined;
     }
     await mkdir(p.artifactsDir, { recursive: true });
-    return new Workspace(projectDir, p.rootDir, p.configPath, p.memoryPath, p.artifactsDir, p.taskHistoryPath);
+    await mkdir(p.tracesDir, { recursive: true });
+    return new Workspace(projectDir, p.rootDir, p.configPath, p.memoryPath, p.artifactsDir, p.taskHistoryPath, p.tracesDir);
   }
 
   async loadConfig(): Promise<WorkspaceConfig> {
@@ -98,6 +114,7 @@ export class Workspace {
       projectName: stored.projectName ?? "project",
       orchestrator: { ...DEFAULT_CONFIG.orchestrator, ...stored.orchestrator },
       router: { ...DEFAULT_CONFIG.router, ...stored.router },
+      budgets: { ...DEFAULT_CONFIG.budgets, ...stored.budgets },
     };
     // Re-apply the committed YAML file on every load so editing
     // test0.config.yaml takes effect without re-running `test0 init`,
@@ -140,6 +157,8 @@ function mergeFileConfig(base: WorkspaceConfig, fileConfig: Test0FileConfig | un
     mcpServers: fileConfig.mcpServers
       ? Object.entries(fileConfig.mcpServers).map(([id, s]) => ({ id, command: s.command, args: s.args }))
       : base.mcpServers,
+    budgets: fileConfig.budgets ?? base.budgets,
+    tracingEnabled: fileConfig.tracingEnabled ?? base.tracingEnabled,
   };
 
   if (fileConfig.permissions) {

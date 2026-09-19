@@ -45,6 +45,15 @@ export interface Test0FileConfig {
   orchestrator?: {
     maxConcurrency?: number;
   };
+
+  /**
+   * Per-model rpm/tpm/spend caps, LiteLLM-style. Use "*" to apply a
+   * default to every model, and a specific model id to override it.
+   */
+  budgets?: Record<string, { rpm?: number; tpm?: number; maxBudgetUsd?: number }>;
+
+  /** Record Langfuse/OTel-shaped traces under .test0/traces/traces.jsonl. Default true. */
+  tracingEnabled?: boolean;
 }
 
 export function normalizeMcpServers(config: Test0FileConfig): McpServerConfig[] {
@@ -94,4 +103,16 @@ skillPaths: []
 
 orchestrator:
   maxConcurrency: 3
+
+# LiteLLM-style per-model rpm/tpm/spend caps. "*" applies to every model;
+# a specific model id overrides it. Omit entirely for no enforced limits.
+budgets: {}
+  # "*":
+  #   rpm: 60
+  #   tpm: 100000
+  # deepseek-r1:
+  #   maxBudgetUsd: 5.00
+
+# Record Langfuse/OpenTelemetry-shaped traces under .test0/traces/traces.jsonl
+tracingEnabled: true
 `;

@@ -9,6 +9,7 @@ import { registerMemoryCommand } from "./commands/memory.js";
 import { registerRunCommand } from "./commands/run.js";
 import { registerConfigCommand } from "./commands/config.js";
 import { registerConnectCommand } from "./commands/connect.js";
+import { registerTracesCommand } from "./commands/traces.js";
 
 const program = new Command();
 
@@ -26,6 +27,7 @@ registerAgentsCommand(program);
 registerMemoryCommand(program);
 registerRunCommand(program);
 registerConfigCommand(program);
+registerTracesCommand(program);
 
 program.parseAsync(process.argv).catch((err) => {
   console.error(err instanceof Error ? err.message : err);
