@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import chalk from "chalk";
+import ora from "ora";
 import { Test0Runtime } from "@test0/core";
 
 export function registerRunCommand(program: Command): void {
@@ -14,20 +15,30 @@ export function registerRunCommand(program: Command): void {
       });
 
       console.log(chalk.bold(`Goal: ${goal}\n`));
-      console.log(chalk.dim("Planning..."));
-      const result = await runtime.orchestrator.run(goal);
+      const spinner = ora("Planning and executing...").start();
 
-      console.log("");
+      let result;
+      try {
+        result = await runtime.orchestrator.run(goal);
+      } catch (err) {
+        spinner.fail("Orchestration failed to start");
+        throw err;
+      }
+      spinner.stop();
+
       for (const step of result.plan.steps) {
         const stepResult = result.stepResults.find((r) => r.stepId === step.id);
         const icon = step.status === "done" ? chalk.green("✓") : chalk.red("✗");
         console.log(`${icon} [${step.assignedRole}] ${step.description}`);
         if (stepResult?.modelUsed) console.log(chalk.dim(`    model: ${stepResult.modelUsed}`));
+        if (step.status === "failed" && stepResult) console.log(chalk.red(`    error: ${stepResult.summary}`));
       }
 
       console.log("");
       console.log(result.finalReport);
 
       await runtime.workspace.appendTaskHistory({ goal, success: result.success, steps: result.plan.steps.length });
+      await runtime.shutdown();
+      process.exitCode = result.success ? 0 : 1;
     });
 }

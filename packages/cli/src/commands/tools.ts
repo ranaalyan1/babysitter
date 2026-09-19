@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import chalk from "chalk";
+import Table from "cli-table3";
 import { Test0Runtime } from "@test0/core";
 
 export function registerToolsCommand(program: Command): void {
@@ -8,12 +9,22 @@ export function registerToolsCommand(program: Command): void {
   cmd.action(async () => {
     const runtime = await Test0Runtime.load({ projectDir: process.cwd() });
     const tools = runtime.tools.list();
-    console.log(chalk.bold("AVAILABLE TOOLS\n"));
+
+    const table = new Table({
+      head: [chalk.bold("Tool"), chalk.bold("Source"), chalk.bold("Permission"), chalk.bold("Description")],
+      style: { head: [], border: [] },
+      wordWrap: true,
+      colWidths: [28, 10, 12, 50],
+    });
+
     for (const t of tools) {
       const check = runtime.permissions.check(t.permissionKey, "cli-inspect");
-      const icon = check.decision === "allow" ? chalk.green("✓") : check.decision === "block" ? chalk.red("✗") : chalk.yellow("?");
-      console.log(`${icon} ${t.name} [${t.source}] — ${t.description}`);
+      const decisionColor = check.decision === "allow" ? chalk.green : check.decision === "block" ? chalk.red : chalk.yellow;
+      table.push([t.name, t.source, decisionColor(check.decision), t.description]);
     }
+
+    console.log(table.toString());
+    await runtime.shutdown();
   });
 
   cmd
@@ -25,5 +36,6 @@ export function registerToolsCommand(program: Command): void {
       const args = JSON.parse(opts.args);
       const result = await runtime.tools.call(name, args, "cli-user");
       console.log(JSON.stringify(result, null, 2));
+      await runtime.shutdown();
     });
 }

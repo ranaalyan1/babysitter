@@ -2,6 +2,10 @@
 
 **Universal Agent Infrastructure**
 
+[![CI](https://github.com/ranaalyan1/test0/actions/workflows/ci.yml/badge.svg)](https://github.com/ranaalyan1/test0/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](package.json)
+
 test0 is an open, modular agent infrastructure platform that connects AI
 models, skills, tools, memory, and specialized agents through a unified
 interface.
@@ -13,21 +17,44 @@ infrastructure layer between AI agents and the capabilities they need:
 Any agent → test0 → models + skills + tools + memory + execution
 ```
 
+Point Claude Code, Cursor, Codex, or any MCP client at test0 and it gets:
+a **router** that picks the right model and survives outages/rate-limits
+automatically, a **skill system** built on the same open [Agent Skills /
+SKILL.md spec](https://agentskills.io/specification) Claude Code uses, a
+**tool gateway** that speaks native MCP so you reuse the existing MCP
+ecosystem instead of rebuilding integrations, and a **multi-agent
+orchestrator** that plans and executes complex goals across specialized
+planner/coder/researcher/reviewer/tester agents.
+
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full V5
-architecture spec, and [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md)
-to run it locally.
+architecture spec (with references to the production systems it draws
+from — LiteLLM, OpenRouter, CrewAI, the MCP registry), and
+[`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) to run it locally.
+
+## Why these design choices
+
+test0 doesn't invent its core ideas from scratch — it adapts patterns
+that are already proven in production, open-source systems:
+
+| Subsystem | Inspired by | What test0 borrows |
+|---|---|---|
+| Model router | [LiteLLM](https://github.com/BerriAI/litellm), [OpenRouter](https://openrouter.ai) | Declarative model list, ordered fallback chains, cost-weighted ranking, per-model circuit breakers with cooldown |
+| Skills | [Agent Skills spec](https://agentskills.io/specification) (Anthropic/Claude Code) | The exact `SKILL.md` frontmatter format and progressive-disclosure loading model — skills are portable across runtimes |
+| Tools | [Model Context Protocol](https://modelcontextprotocol.io) | Consume the existing MCP server ecosystem instead of rebuilding GitHub/DB/browser integrations one by one |
+| Agents | [CrewAI](https://github.com/crewAIInc/crewAI) | Role/goal/backstory agent definitions, dependency-aware step execution |
+| Config | LiteLLM `proxy_config.yaml`, Claude/Cursor `mcpServers` | One declarative `test0.config.yaml` for routing policy, permissions, and MCP servers |
 
 ## Monorepo layout
 
 ```
 packages/
-  core/         Model gateway, router, skills, tools, orchestrator,
-                memory, security, benchmarking — the engine.
+  core/         Model gateway, router (+ health/circuit-breaker), skills,
+                tools, orchestrator, memory, security, benchmarking.
   cli/          `test0` developer CLI (init, models, skills, tools,
                 agents, memory, run, config, connect).
   mcp-server/   MCP server exposing test0 to any MCP-compatible client
                 (Claude Code, Cursor, Codex, ...).
-skills/         Installable SKILL.md-style skill definitions.
+skills/         Installable SKILL.md skills (spec-compliant).
 docs/           Architecture and usage documentation.
 ```
 
@@ -36,15 +63,19 @@ docs/           Architecture and usage documentation.
 ```bash
 npm install
 npm run build
+npm test
 
-# Initialize a workspace in the current project
-node packages/cli/dist/index.js init
+# Initialize a workspace (+ an editable test0.config.yaml)
+node packages/cli/dist/index.js init --with-config
 
 # See what's available
 node packages/cli/dist/index.js models
 node packages/cli/dist/index.js skills
 node packages/cli/dist/index.js tools
 node packages/cli/dist/index.js agents
+
+# Run the reproducible benchmark suite across every registered model
+node packages/cli/dist/index.js models bench
 
 # Run an orchestrated, multi-agent task
 node packages/cli/dist/index.js run "Build a Python bioinformatics pipeline, test it, and write docs"
@@ -62,11 +93,22 @@ test0 --help
 
 ## Status
 
-This is the V5 scaffold: real, runnable TypeScript across the full
-architecture (model gateway with pluggable providers, an intelligent
-router with policy-based fallback, a skill loader, a tool gateway with
-MCP-server support, a permission/audit system, file-backed memory with
-context assembly, a planner + multi-agent orchestrator, workspaces, and
-an MCP server). Model providers ship with deterministic simulated
-completions so the whole pipeline runs offline; wire in real provider
-API calls in `packages/core/src/models/providers/*` to go to production.
+This is a fully wired V5 implementation: real, tested TypeScript across
+the entire architecture — model gateway with pluggable providers, an
+intelligent router with policy-based ranking, per-model circuit breakers,
+and bounded retries; a spec-compliant skill loader with validation; a
+tool gateway with native MCP-server support; a permission/audit system;
+file-backed memory with budgeted context assembly; a dynamic planner and
+concurrent multi-agent orchestrator; declarative YAML configuration; and
+an MCP server. 25 automated tests cover routing/fallback, circuit
+breaking, skill validation, permissions, planning, and config
+backward-compatibility (`npm test`); CI runs on Node 18/20/22.
+
+Model providers ship with deterministic simulated completions so the
+whole pipeline runs offline without API keys; wire in real provider HTTP
+calls in `packages/core/src/models/providers/*` to go to production.
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to add a model provider,
+a skill, or a tool.

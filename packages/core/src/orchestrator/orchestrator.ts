@@ -16,16 +16,25 @@ import { DEFAULT_AGENTS, findAgentForRole } from "./agents.js";
 export interface OrchestratorOptions {
   agents?: AgentDefinition[];
   projectScope?: string;
+  /** How many independent (dependency-satisfied) steps may run at once. Default 3. */
+  maxConcurrency?: number;
 }
 
 /**
- * Agent Orchestrator (section 8) implementing the V5 product principle
- * (section 20): the user describes a goal, and test0 determines the plan,
+ * Agent Orchestrator (test0 V5 §8) implementing the V5 product principle
+ * (§20): the user describes a goal, and test0 determines the plan,
  * agents, skills, tools, models, and execution strategy needed.
+ *
+ * Execution follows CrewAI's "sequential process" idea at the dependency
+ * level — each step waits for its declared dependencies — but, unlike a
+ * strictly linear crew, independent steps (e.g. two research branches
+ * with no shared dependency) run concurrently up to `maxConcurrency`,
+ * closer to how a real team would parallelize a wave of ready work.
  */
 export class Orchestrator {
   private readonly agents: AgentDefinition[];
   private readonly projectScope: string;
+  private readonly maxConcurrency: number;
   private readonly planner = new TaskPlanner();
 
   constructor(
@@ -38,28 +47,35 @@ export class Orchestrator {
   ) {
     this.agents = options.agents ?? DEFAULT_AGENTS;
     this.projectScope = options.projectScope ?? "default";
+    this.maxConcurrency = options.maxConcurrency ?? 3;
   }
 
   async run(goal: string): Promise<OrchestrationResult> {
     const plan = this.planner.plan(goal);
     const stepResults: StepResult[] = [];
 
-    const ready = () =>
-      plan.steps.filter(
-        (s) => s.status === "pending" && s.dependsOn.every((depId) => plan.steps.find((d) => d.id === depId)?.status === "done")
-      );
+    const isSatisfied = (step: PlanStep) =>
+      step.dependsOn.every((depId) => plan.steps.find((d) => d.id === depId)?.status === "done");
 
-    // Execute steps respecting dependency order; independent steps could
-    // run concurrently, but we keep this sequential for a legible trace.
+    const ready = () => plan.steps.filter((s) => s.status === "pending" && isSatisfied(s));
+
     let guard = 0;
-    while (plan.steps.some((s) => s.status === "pending") && guard < plan.steps.length * 2) {
+    while (plan.steps.some((s) => s.status === "pending" || s.status === "in-progress") && guard < plan.steps.length * 2) {
       guard++;
-      const runnable = ready();
+      const runnable = ready().slice(0, this.maxConcurrency);
       if (runnable.length === 0) break;
 
-      for (const step of runnable) {
-        step.status = "in-progress";
-        const result = await this.executeStep(step, plan, stepResults);
+      for (const step of runnable) step.status = "in-progress";
+
+      // Independent, dependency-satisfied steps execute concurrently —
+      // there's no reason a research step and an unrelated planning step
+      // should serialize just because the orchestrator is sequential
+      // about dependency order.
+      const results = await Promise.all(runnable.map((step) => this.executeStep(step, plan, stepResults)));
+
+      for (let i = 0; i < runnable.length; i++) {
+        const step = runnable[i];
+        const result = results[i];
         stepResults.push(result);
         step.status = result.status === "done" ? "done" : "failed";
       }
@@ -85,18 +101,14 @@ export class Orchestrator {
       .map((name) => this.skills.get(name))
       .filter((s): s is NonNullable<typeof s> => Boolean(s));
 
-    const toolResults: Array<{ tool: string; output: unknown }> = [];
-    for (const toolName of agent.tools) {
-      if (!this.tools.find(toolName)) continue;
-      // Agents only *may* invoke tools relevant to the step; we don't
-      // force a call here since not every step needs every declared tool.
-    }
+    const persona = [agent.backstory, agent.goal ? `Your goal: ${agent.goal}` : undefined].filter(Boolean).join(" ");
 
     const assembled = await this.context.assemble({
-      task: `[${step.assignedRole}] ${step.description}\n\nOverall goal: ${plan.goal}`,
+      task:
+        (persona ? `${persona}\n\n` : "") +
+        `[${step.assignedRole}] ${step.description}\n\nOverall goal: ${plan.goal}`,
       projectScope: this.projectScope,
       skills: agentSkills,
-      toolResults,
       previousAgentResults: priorResults.map((r) => ({ agentId: r.agentId, summary: r.summary })),
     });
 

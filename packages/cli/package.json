@@ -12,12 +12,15 @@
   },
   "dependencies": {
     "@test0/core": "*",
+    "chalk": "^6.0.0",
+    "cli-table3": "^0.6.5",
     "commander": "^15.0.0",
-    "chalk": "^6.0.0"
+    "ora": "^9.4.1",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
-    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0",
     "rimraf": "^6.0.1",
-    "@types/node": "^22.0.0"
+    "typescript": "^5.6.0"
   }
 }

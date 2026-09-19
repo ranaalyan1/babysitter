@@ -31,3 +31,7 @@ export { Orchestrator, type OrchestratorOptions } from "./orchestrator/orchestra
 export { Workspace, type WorkspaceConfig } from "./workspace/workspace.js";
 
 export { Test0Runtime, type Test0RuntimeOptions } from "./runtime.js";
+
+export { HealthTracker, type HealthSnapshot, type HealthTrackerOptions } from "./router/health.js";
+export { loadFileConfig, CONFIG_FILE_NAMES } from "./config/loader.js";
+export { EXAMPLE_CONFIG_YAML, normalizeMcpServers, type Test0FileConfig } from "./config/schema.js";

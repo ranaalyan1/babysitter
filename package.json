@@ -2,17 +2,44 @@
   "name": "test0",
   "version": "5.0.0",
   "private": true,
-  "description": "test0 V5 — Universal Agent Infrastructure",
+  "type": "module",
+  "description": "Universal Agent Infrastructure — connect any AI agent to models, skills, tools, memory, and orchestrated multi-agent execution through one unified layer.",
+  "keywords": [
+    "agent",
+    "agents",
+    "llm",
+    "mcp",
+    "model-context-protocol",
+    "orchestration",
+    "ai-infrastructure",
+    "multi-agent",
+    "router",
+    "agent-skills"
+  ],
+  "homepage": "https://github.com/ranaalyan1/test0#readme",
+  "bugs": "https://github.com/ranaalyan1/test0/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ranaalyan1/test0.git"
+  },
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @test0/core && npm run build -w @test0/cli && npm run build -w @test0/mcp-server",
     "clean": "npm run clean --workspaces --if-present",
     "test0": "node packages/cli/dist/index.js",
     "dev:cli": "npm run build -w @test0/core && npm run build -w @test0/cli && node packages/cli/dist/index.js",
     "dev:mcp": "npm run build -w @test0/core && npm run build -w @test0/mcp-server && node packages/mcp-server/dist/index.js",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "lint": "eslint packages",
+    "format": "prettier --write \"packages/**/*.ts\" \"*.md\" \"docs/**/*.md\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.1",
+    "prettier": "^3.9.8",
+    "typescript-eslint": "^8.70.0"
   },
   "engines": {
     "node": ">=18"

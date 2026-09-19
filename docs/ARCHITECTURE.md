@@ -52,19 +52,45 @@ client is talking to test0.
 - `router/router.ts` — `ModelRouter` filters models by capability
   (coding/reasoning/vision/tool-use/context/latency), ranks them by the
   active `RoutingPolicy` (`free-first`, `quality-first`, `local-first`,
-  `cheapest`, `fastest`), and tries candidates in order with automatic
-  fallback on rate-limit/unavailable/error, returning one unified
-  `ModelResponse` regardless of which provider ultimately served it.
+  `cheapest`, `fastest`), and tries candidates in order with bounded
+  per-candidate retries plus automatic fallback on rate-limit/unavailable/
+  error, returning one unified `ModelResponse` regardless of which
+  provider ultimately served it. Design is directly modeled on two
+  production LLM gateways:
+  - **LiteLLM's `Router`**: a declarative model list, policy-driven
+    ranking, and an ordered fallback chain tried on error/429/timeout.
+  - **OpenRouter's provider routing**: deprioritize (don't permanently
+    ban) a provider after a recent outage, and weight `cheapest`-policy
+    candidates by capability/price² rather than a hard price cliff, so a
+    slightly pricier but much better model isn't buried behind the
+    single cheapest option.
+- `router/health.ts` — `HealthTracker` implements a per-model circuit
+  breaker: after `allowedFails` consecutive failures (default 3, matching
+  LiteLLM's typical default) a model is skipped for `cooldownMs` (default
+  30s, matching OpenRouter's outage-detection window) before being
+  retried, rather than either retrying forever or banning it permanently.
 
 ## 6. Skill System
 
-- `skills/loader.ts` — `SkillRegistry` loads `SKILL.md` files (YAML-ish
-  frontmatter + instructions body) from a directory, and supports
-  install/remove/list/find-by-tag at runtime.
+- `skills/loader.ts` — `SkillRegistry` implements the open
+  [Agent Skills specification](https://agentskills.io/specification)
+  (the same `SKILL.md` format used by Claude Code), not a bespoke
+  schema: YAML frontmatter (`name`, `description`, `license`,
+  `compatibility`, `metadata`, `allowed-tools`) + a Markdown instructions
+  body, parsed with a real YAML parser and validated against the spec's
+  constraints (name pattern/length, description length, angle-bracket
+  injection warning). `skills validate` surfaces every issue.
+- Progressive disclosure per the spec: `summaries()` returns the cheap
+  Level-1 view (name + description only, ~100 tokens each) for every
+  installed skill; `get(name)` returns the full Level-2 body once an
+  agent/orchestrator decides a skill is relevant; Level-3
+  (`scripts/`/`references/`/`assets/`) is left for the agent to read
+  lazily as the body instructs, never eagerly loaded by test0.
 - Top-level `skills/` directory ships example skills: python,
   javascript, typescript, react, debugging, code-review, security,
   research, web-research, data-analysis, bioinformatics, and a `custom/`
-  slot for user-defined skills.
+  slot for user-defined skills — all spec-compliant and portable to any
+  other Agent-Skills-compatible runtime.
 
 ## 7. Tool Gateway
 
@@ -86,12 +112,19 @@ client is talking to test0.
   [implement] → [test → fix] → [github] → [security review] → review →
   [docs] → final report.
 - `orchestrator/agents.ts` — `DEFAULT_AGENTS` defines planner, coder,
-  researcher, reviewer, and tester agents, each with its own skills,
-  tools, and preferred task types.
+  researcher, reviewer, and tester agents using CrewAI's role/goal/
+  backstory shape (role = what the agent does, goal = what it optimizes
+  for, backstory = persona/expertise framing), plus test0's own
+  skills/tools/preferred-task-type declarations that CrewAI doesn't need
+  (it doesn't have a skill system or a model router).
 - `orchestrator/orchestrator.ts` — `Orchestrator.run(goal)` executes the
   plan respecting dependencies, assembling context per step via
-  `ContextManager`, routing each step's model call via `ModelRouter`,
-  and producing a final markdown report plus structured `StepResult[]`.
+  `ContextManager`, routing each step's model call via `ModelRouter`, and
+  producing a final markdown report plus structured `StepResult[]`.
+  Independent, dependency-satisfied steps run concurrently (bounded by
+  `maxConcurrency`, configurable in `test0.config.yaml`) rather than
+  strictly serializing every step, since two unrelated branches of a plan
+  (e.g. two research steps) have no reason to wait on each other.
 
 ## 10–11. Memory and Context
 
@@ -150,6 +183,21 @@ agents|memory|run|config` using Commander, all operating on the same
 `run_agent` as MCP tools over stdio, so Claude Code/Cursor/Codex/any
 MCP client gets test0's full capability surface through one server
 without needing to understand its internals.
+
+## Declarative configuration
+
+- `config/schema.ts` / `config/loader.ts` — an optional, git-committed
+  `test0.config.yaml` at the project root, modeled directly on LiteLLM's
+  `proxy_config.yaml` (`model_list` + `router_settings`) and the
+  `mcpServers` map used by Claude Desktop/Cursor/Claude Code config
+  files. It layers on top of `.test0/config.json` (which remains the
+  mutable runtime state written by commands like `test0 config
+  permission ...`): defaults → `test0.config.yaml` → `.test0/config.json`
+  overrides. `test0 init --with-config` scaffolds a commented example.
+  Loading an older `.test0/config.json` (missing newer fields, e.g. from
+  before `router`/`orchestrator` settings existed) is backfilled with
+  current defaults rather than crashing, so upgrading test0 never breaks
+  an existing workspace.
 
 ## 19. Workspace
 

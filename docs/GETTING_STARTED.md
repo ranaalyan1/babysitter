@@ -31,20 +31,52 @@ If you `npm link --workspace packages/cli`, you can just run `test0 init`.
 ## Explore the CLI
 
 ```bash
-test0 models              # list models + current routing policy
-test0 models set-policy free-first   # free-first | quality-first | local-first | cheapest | fastest
-test0 skills               # list installed skills
-test0 skills show python   # print a skill's instructions
-test0 tools                # list tools + permission status
+test0 models                          # list models + health status + current routing policy
+test0 models set-policy free-first    # free-first | quality-first | local-first | cheapest | fastest
+test0 models bench [modelId]          # run the reproducible benchmark suite
+test0 skills                          # list installed skills
+test0 skills show python              # print a skill's instructions (Level 2 disclosure)
+test0 skills validate                 # validate every skill against the Agent Skills spec
+test0 tools                           # list tools + permission status
 test0 tools call filesystem.read --args '{"path":"README.md"}'
-test0 agents                # list specialized agents
-test0 memory                # inspect stored memory
-test0 memory search "bug"   # search memory
-test0 config                 # view workspace config
+test0 agents                          # list specialized agents (role/goal/backstory)
+test0 memory                          # inspect stored memory
+test0 memory search "bug"             # search memory
+test0 config                          # view merged workspace config
 test0 config permission terminal.execute allow   # change a permission rule
-test0 connect                # check provider connectivity
+test0 connect                         # check provider + MCP server connectivity
 test0 run "Build a Python bioinformatics pipeline, test it, and write docs"
 ```
+
+## Declarative configuration
+
+Run `test0 init --with-config` to also scaffold an editable
+`test0.config.yaml` at the project root — commit this to git. It lets you
+set the routing policy, retry/circuit-breaker knobs, enabled providers,
+permission overrides, and MCP servers declaratively instead of only via
+CLI mutations:
+
+```yaml
+router:
+  policy: quality-first
+  retriesPerCandidate: 1
+  health:
+    allowedFails: 3
+    cooldownMs: 30000
+
+permissions:
+  terminal.execute: allow
+
+mcpServers:
+  github:
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: "${GITHUB_TOKEN}"
+```
+
+`.test0/config.json` remains the mutable runtime state; `test0.config.yaml`
+is layered on top of it every time the workspace loads.
 
 `test0 run` is the full orchestration path: it plans dynamic steps,
 assigns specialized agents (planner/coder/researcher/reviewer/tester),

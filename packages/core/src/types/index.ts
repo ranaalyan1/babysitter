@@ -140,20 +140,49 @@ export interface RoutingDecision {
 // Skills
 // ---------------------------------------------------------------------------
 
+/**
+ * Mirrors the open Agent Skills specification (agentskills.io /
+ * Anthropic's SKILL.md format) so skills written for test0 are portable
+ * to Claude Code, Claude apps, and other spec-compliant runtimes, and
+ * vice versa.
+ */
 export interface SkillMetadata {
+  /** Lowercase letters, numbers, and hyphens only. Max 64 chars. */
   name: string;
-  version: string;
+  /** What the skill does AND when to use it. Max 1024 chars. */
   description: string;
-  tags: string[];
-  requiredTools?: string[];
+  /** SPDX identifier or reference to a bundled license file. */
+  license?: string;
+  /** Environment requirements: system packages, network access, etc. */
+  compatibility?: string;
+  /** Arbitrary string->string metadata (spec-compliant extension point). */
+  metadata?: Record<string, string>;
+  /** Pre-approved tool names this skill may invoke without extra prompting. */
+  allowedTools?: string[];
+  /** test0 extensions beyond the spec, used for local install/registry bookkeeping. */
+  version?: string;
+  tags?: string[];
   dependencies?: string[];
   author?: string;
+}
+
+export interface SkillValidationIssue {
+  level: "error" | "warning";
+  message: string;
 }
 
 export interface SkillDescriptor {
   metadata: SkillMetadata;
   path: string;
-  instructions: string; // rendered body of SKILL.md
+  instructions: string; // rendered body of SKILL.md (Level 2 in the progressive-disclosure model)
+  issues: SkillValidationIssue[];
+}
+
+/** Level-1 view: what an agent sees for every installed skill before deciding to load one. */
+export interface SkillSummary {
+  name: string;
+  description: string;
+  tags: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -251,14 +280,36 @@ export interface MemoryQuery {
 
 export type AgentRole = "planner" | "coder" | "researcher" | "reviewer" | "tester" | "custom";
 
+/**
+ * Modeled on CrewAI's role/goal/backstory agent definition, which has
+ * proven a legible way to describe "an AI team" to both humans and
+ * models: `role` is what the agent does, `goal` is what it's optimizing
+ * for, and `backstory` primes the persona/expertise it acts with.
+ */
 export interface AgentDefinition {
   id: string;
   role: AgentRole;
+  /** What this agent does, e.g. "Senior backend engineer". */
   description: string;
+  /** What this agent is trying to accomplish on every task it takes. */
+  goal?: string;
+  /** Short persona/expertise framing injected into the agent's system context. */
+  backstory?: string;
   skills: string[];
   tools: string[];
   preferredTaskTypes: TaskType[];
+  /** Whether this agent may hand off/delegate sub-tasks to other agents (hierarchical process only). */
+  allowDelegation?: boolean;
 }
+
+/**
+ * Execution process for a crew of agents, mirroring CrewAI's
+ * `Process.sequential` vs `Process.hierarchical`:
+ *  - sequential: steps run strictly in dependency order (test0's default).
+ *  - hierarchical: a manager/planner agent dynamically delegates each
+ *    step to a worker agent and can re-delegate on failure.
+ */
+export type OrchestrationProcess = "sequential" | "hierarchical";
 
 export interface PlanStep {
   id: string;

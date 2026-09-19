@@ -22,7 +22,10 @@ export class BenchmarkStore {
           messages: [{ role: "user", content: testCase.prompt }],
           taskType: testCase.taskType,
         });
-        const latencyMs = Date.now() - start;
+        // Providers report their own (simulated or real) latency; prefer
+        // that over wall-clock time here since simulated adapters don't
+        // actually block for their advertised latency.
+        const latencyMs = response.latencyMs;
         const passed = testCase.expectedContains
           ? testCase.expectedContains.every((needle) => response.content.toLowerCase().includes(needle.toLowerCase()))
           : true;
@@ -79,12 +82,18 @@ export const DEFAULT_BENCHMARK_CASES: BenchmarkCase[] = [
     id: "coding-basic",
     taskType: "coding",
     prompt: "Write a function that reverses a string.",
-    expectedContains: ["response"],
+    expectedContains: ["reverse"],
   },
   {
     id: "reasoning-basic",
     taskType: "reasoning",
     prompt: "If a train travels 60 miles in 1.5 hours, what is its average speed?",
-    expectedContains: ["response"],
+    expectedContains: ["train"],
+  },
+  {
+    id: "instruction-following",
+    taskType: "general",
+    prompt: "Reply with exactly the single word: acknowledged",
+    expectedContains: ["acknowledged"],
   },
 ];

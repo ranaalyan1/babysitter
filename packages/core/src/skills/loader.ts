@@ -1,42 +1,56 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
-import type { SkillDescriptor, SkillMetadata } from "../types/index.js";
+import { parse as parseYaml } from "yaml";
+import type { SkillDescriptor, SkillMetadata, SkillSummary, SkillValidationIssue } from "../types/index.js";
+
+const NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+const MAX_NAME_LENGTH = 64;
+const MAX_DESCRIPTION_LENGTH = 1024;
 
 /**
- * Skill System (section 6).
+ * Skill System (test0 V5 §6), implementing the open Agent Skills / SKILL.md
+ * specification (see https://agentskills.io/specification and Anthropic's
+ * "Agent Skills" format) rather than a bespoke schema. This buys test0
+ * compatibility with the growing ecosystem of skills authored for Claude
+ * Code and other spec-compliant agents.
  *
- * Skills live on disk as directories containing a SKILL.md file with
- * YAML-ish frontmatter metadata + free-form instructions body, mirroring
- * common SKILL.md-style agent workflows.
+ * Progressive disclosure, per the spec:
+ *   Level 1 — name + description only, loaded for every skill at session
+ *             start (cheap, ~100 tokens each). See `SkillRegistry.summaries()`.
+ *   Level 2 — the full SKILL.md body, loaded once an agent decides a
+ *             skill is relevant. See `SkillRegistry.get()`.
+ *   Level 3 — referenced files (scripts/, references/, assets/) loaded
+ *             lazily by the agent as instructed inside the body; test0
+ *             does not eagerly read these.
  *
- * Example:
- *   skills/python/SKILL.md
- *   ---
- *   name: python
- *   version: 1.0.0
- *   description: Python coding conventions and best practices
- *   tags: [coding, python]
- *   requiredTools: [terminal, filesystem]
- *   ---
- *   # Python Skill
- *   ...instructions...
+ * Directory layout per skill:
+ *   skills/<name>/
+ *     SKILL.md       (required)
+ *     scripts/       (optional, executable helpers)
+ *     references/    (optional, loaded only when the body points to them)
+ *     assets/        (optional, templates/images/etc.)
  */
 export class SkillRegistry {
   private skills = new Map<string, SkillDescriptor>();
+  private readonly skillsDirs: string[];
 
-  constructor(private readonly skillsDir: string) {}
+  constructor(skillsDir: string | string[]) {
+    this.skillsDirs = Array.isArray(skillsDir) ? skillsDir : [skillsDir];
+  }
 
   async loadAll(): Promise<SkillDescriptor[]> {
     this.skills.clear();
-    let entries: string[] = [];
-    try {
-      entries = await readdir(this.skillsDir);
-    } catch {
-      return [];
+    for (const dir of this.skillsDirs) {
+      await this.loadDir(dir);
     }
+    return this.list();
+  }
+
+  private async loadDir(skillsDir: string): Promise<void> {
+    const entries = await readdir(skillsDir).catch(() => []);
 
     for (const entry of entries) {
-      const dirPath = join(this.skillsDir, entry);
+      const dirPath = join(skillsDir, entry);
       try {
         const s = await stat(dirPath);
         if (!s.isDirectory()) continue;
@@ -53,7 +67,15 @@ export class SkillRegistry {
         continue;
       }
     }
-    return this.list();
+  }
+
+  /** Level 1 view for every installed skill — cheap to hand to a planning model. */
+  summaries(): SkillSummary[] {
+    return this.list().map((s) => ({
+      name: s.metadata.name,
+      description: s.metadata.description,
+      tags: s.metadata.tags ?? [],
+    }));
   }
 
   list(): SkillDescriptor[] {
@@ -65,7 +87,7 @@ export class SkillRegistry {
   }
 
   findByTag(tag: string): SkillDescriptor[] {
-    return this.list().filter((s) => s.metadata.tags.includes(tag));
+    return this.list().filter((s) => (s.metadata.tags ?? []).includes(tag));
   }
 
   install(descriptor: SkillDescriptor): void {
@@ -77,54 +99,93 @@ export class SkillRegistry {
   }
 }
 
-function parseSkillFile(raw: string, path: string): SkillDescriptor {
-  const frontmatterMatch = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+export function parseSkillFile(raw: string, path: string): SkillDescriptor {
+  const frontmatterMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  const issues: SkillValidationIssue[] = [];
+
   if (!frontmatterMatch) {
-    // No frontmatter: treat entire file as instructions with minimal metadata.
+    issues.push({ level: "error", message: "SKILL.md is missing required YAML frontmatter (--- ... ---)." });
     return {
-      metadata: {
-        name: path.split("/").pop() ?? "unknown",
-        version: "0.0.0",
-        description: "",
-        tags: [],
-      },
+      metadata: { name: path.split("/").pop() ?? "unknown", description: "" },
       path,
-      instructions: raw,
+      instructions: raw.trim(),
+      issues,
     };
   }
 
-  const [, frontmatter, body] = frontmatterMatch;
-  const metadata = parseFrontmatter(frontmatter);
-  return { metadata, path, instructions: body.trim() };
+  const [, frontmatterText, body] = frontmatterMatch;
+  const metadata = parseFrontmatter(frontmatterText, issues);
+  validateMetadata(metadata, issues);
+
+  return { metadata, path, instructions: body.trim(), issues };
 }
 
-function parseFrontmatter(text: string): SkillMetadata {
-  const lines = text.split("\n");
-  const data: Record<string, unknown> = {};
-  for (const line of lines) {
-    const m = line.match(/^([a-zA-Z_]+):\s*(.*)$/);
-    if (!m) continue;
-    const [, key, rawValue] = m;
-    data[key] = parseValue(rawValue.trim());
+function parseFrontmatter(text: string, issues: SkillValidationIssue[]): SkillMetadata {
+  let data: Record<string, unknown> = {};
+  try {
+    data = (parseYaml(text) as Record<string, unknown>) ?? {};
+  } catch (err) {
+    issues.push({ level: "error", message: `Failed to parse frontmatter YAML: ${err instanceof Error ? err.message : err}` });
   }
+
+  const toStringArray = (v: unknown): string[] | undefined => {
+    if (Array.isArray(v)) return v.map(String);
+    if (typeof v === "string" && v.trim()) return v.split(/\s+/); // spec allows space-separated allowed-tools
+    return undefined;
+  };
+
   return {
-    name: String(data.name ?? "unknown"),
-    version: String(data.version ?? "0.0.0"),
+    name: String(data.name ?? path_basename_fallback()),
     description: String(data.description ?? ""),
-    tags: Array.isArray(data.tags) ? (data.tags as string[]) : [],
-    requiredTools: Array.isArray(data.requiredTools) ? (data.requiredTools as string[]) : undefined,
-    dependencies: Array.isArray(data.dependencies) ? (data.dependencies as string[]) : undefined,
+    license: data.license ? String(data.license) : undefined,
+    compatibility: data.compatibility ? String(data.compatibility) : undefined,
+    metadata: isStringRecord(data.metadata) ? data.metadata : undefined,
+    allowedTools: toStringArray(data["allowed-tools"] ?? data.allowedTools),
+    version: data.version ? String(data.version) : "1.0.0",
+    tags: toStringArray(data.tags) ?? [],
+    dependencies: toStringArray(data.dependencies),
     author: data.author ? String(data.author) : undefined,
   };
+
+  function path_basename_fallback(): string {
+    return "unknown";
+  }
 }
 
-function parseValue(value: string): unknown {
-  if (value.startsWith("[") && value.endsWith("]")) {
-    return value
-      .slice(1, -1)
-      .split(",")
-      .map((v) => v.trim())
-      .filter(Boolean);
+function isStringRecord(v: unknown): v is Record<string, string> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function validateMetadata(metadata: SkillMetadata, issues: SkillValidationIssue[]): void {
+  if (!metadata.name) {
+    issues.push({ level: "error", message: "Missing required 'name' field." });
+  } else {
+    if (metadata.name.length > MAX_NAME_LENGTH) {
+      issues.push({ level: "error", message: `'name' exceeds ${MAX_NAME_LENGTH} characters.` });
+    }
+    if (!NAME_PATTERN.test(metadata.name)) {
+      issues.push({
+        level: "error",
+        message: "'name' must be lowercase letters, numbers, and hyphens only, and must not start/end with a hyphen.",
+      });
+    }
   }
-  return value;
+
+  if (!metadata.description) {
+    issues.push({ level: "error", message: "Missing required 'description' field." });
+  } else if (metadata.description.length > MAX_DESCRIPTION_LENGTH) {
+    issues.push({ level: "error", message: `'description' exceeds ${MAX_DESCRIPTION_LENGTH} characters.` });
+  } else if (metadata.description.length < 20) {
+    issues.push({
+      level: "warning",
+      message: "'description' is very short — the spec recommends describing both what the skill does and when to use it.",
+    });
+  }
+
+  if (/[<>]/.test(JSON.stringify(metadata))) {
+    issues.push({
+      level: "warning",
+      message: "Frontmatter contains angle brackets, which the spec warns can inject unintended instructions.",
+    });
+  }
 }
