@@ -18,6 +18,8 @@ import { Workspace, type WorkspaceConfig } from "./workspace/workspace.js";
 import { McpServerConnection } from "./tools/mcp-client.js";
 import { BudgetManager } from "./budget/limiter.js";
 import { Tracer } from "./observability/tracer.js";
+import { ResponseCache } from "./cache/response-cache.js";
+import { GuardrailEngine } from "./guardrails/guardrails.js";
 import type { ModelProvider, RoutingPolicy } from "./types/index.js";
 
 export interface Test0RuntimeOptions {
@@ -50,6 +52,8 @@ export class Test0Runtime {
   readonly orchestrator: Orchestrator;
   readonly budget: BudgetManager;
   readonly tracer: Tracer;
+  readonly cache: ResponseCache;
+  readonly guardrails: GuardrailEngine;
   private readonly mcpConnections: McpServerConnection[] = [];
 
   private constructor(
@@ -71,6 +75,14 @@ export class Test0Runtime {
 
     this.tracer = new Tracer(config.tracingEnabled ? workspace.tracesDir : undefined);
 
+    this.cache = new ResponseCache({
+      enabled: config.cache.enabled,
+      ttlMs: config.cache.ttlMs,
+      maxEntries: config.cache.maxEntries,
+      similarityThreshold: config.cache.similarityThreshold,
+    });
+    this.guardrails = new GuardrailEngine({ enabled: config.guardrails.enabled });
+
     this.router = new ModelRouter(this.gateway, {
       policy: routingPolicy,
       benchmarkStore: this.benchmarks,
@@ -79,6 +91,8 @@ export class Test0Runtime {
       health: { allowedFails: config.router.allowedFails, cooldownMs: config.router.cooldownMs },
       budget: this.budget,
       tracer: this.tracer,
+      cache: this.cache,
+      guardrails: this.guardrails,
     });
 
     const skillDirs = [join(workspace.rootDir, "..", "skills"), ...config.skillPaths];

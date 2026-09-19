@@ -25,6 +25,10 @@ export interface WorkspaceConfig {
   budgets: Record<string, ModelBudgetConfig>;
   /** Whether to record Langfuse/OTel-shaped traces under .test0/traces/. */
   tracingEnabled: boolean;
+  /** GPTCache-style exact + semantic response cache in front of the model gateway. */
+  cache: { enabled: boolean; ttlMs: number; maxEntries: number; similarityThreshold: number };
+  /** Guardrails AI/NeMo-style input (prompt-injection) and output (PII/secret redaction) checks. */
+  guardrails: { enabled: boolean };
 }
 
 const DEFAULT_CONFIG: Omit<WorkspaceConfig, "projectName"> = {
@@ -38,6 +42,8 @@ const DEFAULT_CONFIG: Omit<WorkspaceConfig, "projectName"> = {
   router: { retriesPerCandidate: 1, retryBackoffMs: 200, allowedFails: 3, cooldownMs: 30_000 },
   budgets: {},
   tracingEnabled: true,
+  cache: { enabled: true, ttlMs: 5 * 60_000, maxEntries: 500, similarityThreshold: 0.85 },
+  guardrails: { enabled: true },
 };
 
 /**
@@ -115,6 +121,8 @@ export class Workspace {
       orchestrator: { ...DEFAULT_CONFIG.orchestrator, ...stored.orchestrator },
       router: { ...DEFAULT_CONFIG.router, ...stored.router },
       budgets: { ...DEFAULT_CONFIG.budgets, ...stored.budgets },
+      cache: { ...DEFAULT_CONFIG.cache, ...stored.cache },
+      guardrails: { ...DEFAULT_CONFIG.guardrails, ...stored.guardrails },
     };
     // Re-apply the committed YAML file on every load so editing
     // test0.config.yaml takes effect without re-running `test0 init`,
@@ -159,6 +167,8 @@ function mergeFileConfig(base: WorkspaceConfig, fileConfig: Test0FileConfig | un
       : base.mcpServers,
     budgets: fileConfig.budgets ?? base.budgets,
     tracingEnabled: fileConfig.tracingEnabled ?? base.tracingEnabled,
+    cache: { ...base.cache, ...fileConfig.cache },
+    guardrails: { ...base.guardrails, ...fileConfig.guardrails },
   };
 
   if (fileConfig.permissions) {

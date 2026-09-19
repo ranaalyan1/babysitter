@@ -10,6 +10,7 @@ import { registerRunCommand } from "./commands/run.js";
 import { registerConfigCommand } from "./commands/config.js";
 import { registerConnectCommand } from "./commands/connect.js";
 import { registerTracesCommand } from "./commands/traces.js";
+import { registerSafetyCommand } from "./commands/safety.js";
 
 const program = new Command();
 
@@ -28,6 +29,7 @@ registerMemoryCommand(program);
 registerRunCommand(program);
 registerConfigCommand(program);
 registerTracesCommand(program);
+registerSafetyCommand(program);
 
 program.parseAsync(process.argv).catch((err) => {
   console.error(err instanceof Error ? err.message : err);

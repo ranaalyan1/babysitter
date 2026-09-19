@@ -49,6 +49,9 @@ test0 run "Build a Python bioinformatics pipeline, test it, and write docs"
 test0 traces                          # list recorded orchestration traces
 test0 traces show <traceId>           # inspect every span in one trace
 test0 traces usage                    # per-model spend/latency/errors + live rpm/tpm budget state
+test0 safety check "<text>"           # test the input (prompt-injection) and output (PII/secret) rails
+test0 cache stats                     # exact/semantic response-cache hit rate for this process
+test0 cache clear                     # clear the in-process response cache
 ```
 
 ## Declarative configuration
@@ -89,6 +92,19 @@ budgets:
 # Record a Langfuse/OpenTelemetry-shaped trace (nested spans per agent
 # step and model call) to .test0/traces/traces.jsonl on every `run`.
 tracingEnabled: true
+
+# GPTCache-style exact + semantic response cache in front of the model
+# gateway. similarityThreshold is a similarity score in [0, 1]; GPTCache's
+# own docs cite ~0.85 as a reasonable starting point.
+cache:
+  enabled: true
+  ttlMs: 300000
+  similarityThreshold: 0.85
+
+# Guardrails AI/NeMo-Guardrails-style input (prompt-injection/jailbreak)
+# and output (PII + secret/credential redaction) checks.
+guardrails:
+  enabled: true
 ```
 
 `.test0/config.json` remains the mutable runtime state; `test0.config.yaml`

@@ -74,6 +74,10 @@ export interface ModelResponse {
   usage: ModelUsage;
   latencyMs: number;
   finishReason: "stop" | "length" | "error";
+  /** True when this response was served from the GPTCache-inspired ResponseCache instead of a real model call. */
+  cached?: boolean;
+  /** Guardrails AI/NeMo-style findings from the output rail (PII/secret redaction), if any ran. */
+  guardrailFindings?: Array<{ validator: string; category: string; action: "allow" | "redact" | "block"; count?: number; detail?: string }>;
   raw?: unknown;
 }
 
@@ -132,6 +136,8 @@ export interface RoutingDecision {
   chosen: ModelDescriptor;
   candidates: ModelDescriptor[];
   attempted: Array<{ modelId: string; outcome: "success" | "rate-limited" | "unavailable" | "error" }>;
+  /** True if the response came from the response cache instead of an actual model call. */
+  cacheHit?: boolean;
   policy: RoutingPolicy;
   reason: string;
 }

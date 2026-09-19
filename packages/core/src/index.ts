@@ -38,3 +38,18 @@ export { EXAMPLE_CONFIG_YAML, normalizeMcpServers, type Test0FileConfig } from "
 
 export { BudgetManager, type RateLimitConfig, type BudgetCheckResult } from "./budget/limiter.js";
 export { Tracer, toOtlpLikeJson, type Trace, type Span, type SpanKind, type SpanStatus, type ActiveSpanHandle } from "./observability/tracer.js";
+export { ResponseCache, type ResponseCacheOptions, type CacheLookupResult } from "./cache/response-cache.js";
+export {
+  GuardrailEngine,
+  piiRedactValidator,
+  secretLeakValidator,
+  promptInjectionValidator,
+  DEFAULT_INPUT_VALIDATORS,
+  DEFAULT_OUTPUT_VALIDATORS,
+  type Validator,
+  type ValidatorResult,
+  type GuardrailReport,
+  type GuardrailFinding,
+  type GuardrailAction,
+  type GuardrailEngineOptions,
+} from "./guardrails/guardrails.js";

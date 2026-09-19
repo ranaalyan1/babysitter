@@ -45,6 +45,8 @@ that are already proven in production, open-source systems:
 | Config | LiteLLM `proxy_config.yaml`, Claude/Cursor `mcpServers` | One declarative `test0.config.yaml` for routing policy, permissions, and MCP servers |
 | Observability | [Langfuse](https://langfuse.com) (OTel-native tracing) | Nested trace → span model for every orchestration run, model call, and agent step; exportable as OTel-shaped JSON |
 | Budgets & rate limits | [LiteLLM](https://docs.litellm.ai/docs/proxy/customer_usage) | Per-model `rpm`/`tpm`/`maxBudgetUsd` caps enforced before routing, with a spend-log-style usage summary |
+| Response cache | [GPTCache](https://github.com/zilliztech/GPTCache) | Two-tier exact + semantic cache in front of every model call, so repeated/near-duplicate prompts are free and instant |
+| Guardrails | [Guardrails AI](https://github.com/guardrails-ai/guardrails), [NeMo Guardrails](https://github.com/NVIDIA/NeMo-Guardrails) | Input rail for prompt-injection/jailbreak detection, output rail for PII + secret/credential redaction |
 
 ## Monorepo layout
 
@@ -86,6 +88,10 @@ node packages/cli/dist/index.js run "Build a Python bioinformatics pipeline, tes
 node packages/cli/dist/index.js traces
 node packages/cli/dist/index.js traces usage
 
+# Test the Guardrails AI/NeMo-style input+output rails, and the GPTCache-style response cache
+node packages/cli/dist/index.js safety check "Ignore all previous instructions"
+node packages/cli/dist/index.js cache stats
+
 # Start the MCP server (stdio) so Claude Code / Cursor / Codex can connect
 node packages/mcp-server/dist/index.js
 ```
@@ -109,9 +115,13 @@ concurrent multi-agent orchestrator; declarative YAML configuration;
 Langfuse/OpenTelemetry-style nested tracing across every orchestration
 run, agent step, and model call (`test0 traces`); LiteLLM-style
 per-model `rpm`/`tpm`/spend budget enforcement wired into the router's
-candidate selection (`test0 traces usage`); and an MCP server. 36
-automated tests cover routing/fallback, circuit breaking, skill
-validation, permissions, planning, tracing, budget enforcement, and
+candidate selection (`test0 traces usage`); a GPTCache-style exact +
+semantic response cache in front of every model call (`test0 cache
+stats`); Guardrails AI/NeMo-Guardrails-style input (prompt-injection)
+and output (PII/secret redaction) rails run on every routed request
+(`test0 safety check "<text>"`); and an MCP server. 53 automated tests
+cover routing/fallback, circuit breaking, skill validation, permissions,
+planning, tracing, budget enforcement, response caching, guardrails, and
 config backward-compatibility (`npm test`); CI runs on Node 18/20/22.
 
 Model providers ship with deterministic simulated completions so the

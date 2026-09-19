@@ -54,6 +54,19 @@ export interface Test0FileConfig {
 
   /** Record Langfuse/OTel-shaped traces under .test0/traces/traces.jsonl. Default true. */
   tracingEnabled?: boolean;
+
+  /** GPTCache-style exact + semantic response cache in front of the model gateway. */
+  cache?: {
+    enabled?: boolean;
+    ttlMs?: number;
+    maxEntries?: number;
+    similarityThreshold?: number;
+  };
+
+  /** Guardrails AI/NeMo-style input (prompt-injection) and output (PII/secret redaction) checks. */
+  guardrails?: {
+    enabled?: boolean;
+  };
 }
 
 export function normalizeMcpServers(config: Test0FileConfig): McpServerConfig[] {
@@ -115,4 +128,20 @@ budgets: {}
 
 # Record Langfuse/OpenTelemetry-shaped traces under .test0/traces/traces.jsonl
 tracingEnabled: true
+
+# GPTCache-style exact + semantic response cache in front of the model
+# gateway: identical/near-identical prompts to the same model are served
+# without a real call. similarityThreshold is a Jaccard-similarity score
+# in [0, 1]; GPTCache's own docs cite ~0.85 as a reasonable default.
+cache:
+  enabled: true
+  ttlMs: 300000
+  maxEntries: 500
+  similarityThreshold: 0.85
+
+# Guardrails AI/NeMo-Guardrails-style input (prompt-injection/jailbreak)
+# and output (PII + secret/credential redaction) checks, run by the
+# router on every request/response.
+guardrails:
+  enabled: true
 `;

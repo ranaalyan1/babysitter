@@ -13,6 +13,8 @@ import { HealthTracker, type HealthTrackerOptions } from "./health.js";
 import { BudgetManager } from "../budget/limiter.js";
 import { Tracer, type Trace } from "../observability/tracer.js";
 import { estimateTokens } from "../models/providers/base.js";
+import { ResponseCache } from "../cache/response-cache.js";
+import { GuardrailEngine } from "../guardrails/guardrails.js";
 
 export interface RouterOptions {
   policy?: RoutingPolicy;
@@ -26,6 +28,10 @@ export interface RouterOptions {
   budget?: BudgetManager;
   /** Langfuse/OTel-style tracer; when provided, every route() call emits a trace + model spans. */
   tracer?: Tracer;
+  /** GPTCache-style exact + semantic response cache, shared across router instances if provided. */
+  cache?: ResponseCache;
+  /** Guardrails AI/NeMo-style input (prompt-injection) and output (PII/secret) checks. */
+  guardrails?: GuardrailEngine;
 }
 
 /**
@@ -59,6 +65,8 @@ export class ModelRouter {
   private readonly retriesPerCandidate: number;
   private readonly retryBackoffMs: number;
   readonly budget: BudgetManager;
+  readonly cache: ResponseCache;
+  readonly guardrails: GuardrailEngine;
   private readonly tracer?: Tracer;
 
   constructor(private readonly gateway: ModelGateway, options: RouterOptions = {}) {
@@ -68,6 +76,8 @@ export class ModelRouter {
     this.retriesPerCandidate = options.retriesPerCandidate ?? 1;
     this.retryBackoffMs = options.retryBackoffMs ?? 200;
     this.budget = options.budget ?? new BudgetManager();
+    this.cache = options.cache ?? new ResponseCache();
+    this.guardrails = options.guardrails ?? new GuardrailEngine();
     this.tracer = options.tracer;
   }
 
@@ -172,11 +182,39 @@ export class ModelRouter {
     requirements: RoutingRequirements,
     traceContext?: { trace: Trace; parentSpanId?: string }
   ): Promise<{ response: ModelResponse; decision: RoutingDecision }> {
+    // Guardrails AI/NeMo-style input rail: reject prompt-injection/jailbreak
+    // attempts before spending a single token on a model call.
+    const lastUserMessage = [...request.messages].reverse().find((m) => m.role === "user");
+    if (lastUserMessage) {
+      const inputCheck = this.guardrails.checkInput(lastUserMessage.content);
+      if (!inputCheck.safe) {
+        throw new Error(
+          `Blocked by input guardrail: ${inputCheck.findings.map((f) => `${f.validator}(${f.detail ?? f.category})`).join(", ")}`
+        );
+      }
+    }
+
     const candidates = await this.selectCandidates(requirements);
     if (candidates.length === 0) {
       throw new Error(
         `No available model satisfies requirements for task "${requirements.taskType}" (vision=${!!requirements.requireVision}, toolUse=${!!requirements.requireToolUse})`
       );
+    }
+
+    // GPTCache-style cache check against the top-ranked candidate: an
+    // identical or near-identical prompt to the model we'd pick anyway
+    // is served instantly, at zero cost and zero latency.
+    const cacheLookup = this.cache.get(candidates[0].id, request.messages);
+    if (cacheLookup.hit && cacheLookup.response) {
+      const decision: RoutingDecision = {
+        chosen: candidates[0],
+        candidates,
+        attempted: [],
+        policy: this.policy,
+        cacheHit: true,
+        reason: `Served from response cache (${cacheLookup.matchType} match, similarity=${(cacheLookup.similarity ?? 1).toFixed(2)})`,
+      };
+      return { response: { ...cacheLookup.response, cached: true }, decision };
     }
 
     const attempted: RoutingDecision["attempted"] = [];
@@ -228,13 +266,24 @@ export class ModelRouter {
 
       const start = Date.now();
       try {
-        const response = await this.gateway.complete(candidate.id, request);
+        let response = await this.gateway.complete(candidate.id, request);
         this.health.recordSuccess(candidate.id, Date.now() - start);
         this.budget.record(candidate.id, response.usage.inputTokens + response.usage.outputTokens, response.usage.costUsd);
+
+        // Guardrails AI-style output rail: redact PII/secrets before the
+        // response ever leaves the router. Redaction never blocks — a
+        // completion has already been paid for, so we clean it in place.
+        const outputCheck = this.guardrails.checkOutput(response.content);
+        if (outputCheck.findings.length > 0) {
+          response = { ...response, content: outputCheck.text, guardrailFindings: outputCheck.findings };
+        }
+
+        this.cache.set(candidate.id, request.messages, response);
+
         handle?.end({
           output: response.content,
           usage: { inputTokens: response.usage.inputTokens, outputTokens: response.usage.outputTokens, costUsd: response.usage.costUsd },
-          attributes: { modelId: candidate.id, provider: candidate.provider, attempt },
+          attributes: { modelId: candidate.id, provider: candidate.provider, attempt, guardrailFindings: outputCheck.findings.length },
         });
         return { ok: true, response };
       } catch (err) {

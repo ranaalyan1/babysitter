@@ -206,14 +206,61 @@ an interactive request.
   `Orchestrator`; `Orchestrator.run()` starts a root trace and returns
   its id as `OrchestrationResult.traceId`.
 
+## Response cache and Guardrails
+
+- `cache/response-cache.ts` — `ResponseCache`, modeled on
+  [GPTCache](https://github.com/zilliztech/GPTCache)'s two-tier design:
+  an **exact tier** (hash of model id + normalized prompt → O(1) lookup,
+  always correct) and a **semantic tier** (nearest-neighbor search
+  against a similarity threshold, so a paraphrased near-duplicate prompt
+  still hits). GPTCache itself uses real embeddings + a vector store;
+  test0 stays dependency-free and fully offline by approximating
+  semantic similarity with Jaccard similarity over normalized tokens
+  behind the exact same interface — swap `similarity()` for a real
+  embedding backend to get GPTCache's actual recall/precision without
+  touching any caller. Entries carry a TTL and are evicted
+  least-recently-used past `maxEntries`, and `stats()` reports
+  exact/semantic hit rate the same way GPTCache's own dashboards do, so
+  a threshold that's too loose (correctness risk) or too tight (no
+  savings) is visible rather than silently wrong. The router checks the
+  cache against its top-ranked candidate before making any real call,
+  and populates it on every successful completion.
+- `guardrails/guardrails.ts` — `GuardrailEngine`, modeled on
+  [Guardrails AI](https://github.com/guardrails-ai/guardrails)'s
+  validator-pipeline design and [NeMo Guardrails](https://github.com/NVIDIA/NeMo-Guardrails)'
+  input/output "rails" split. Each `Validator` is a small, independent
+  check (Guardrails AI hub validator shape: `name` + `check(text)`), so
+  the router runs:
+  - an **input rail** on the outbound prompt — heuristic
+    prompt-injection/jailbreak detection ("ignore previous
+    instructions", role-override attempts) — and **blocks** the call
+    entirely on a match, the same class of check as NeMo's
+    `check_input_safety` execution rail;
+  - an **output rail** on the model's response — PII detection +
+    redaction (email/phone/SSN/credit-card, Guardrails AI's
+    `DetectPII`/`ValidPII` validators) and secret/credential leakage
+    (API-key-shaped tokens) — and **redacts** matches in place rather
+    than blocking, following Guardrails AI's `OnFailAction.FIX` default
+    so a paid-for completion isn't thrown away over one flagged token.
+  Both rails are regex/heuristic-based to stay dependency-free and
+  offline-runnable; swap in a real classifier or moderation API behind
+  the same `Validator` interface for production-grade recall.
+- Both are wired into `ModelRouter`: `route()` runs the input rail
+  before selecting candidates and consults the cache right after, and
+  `tryCandidateWithRetries()` runs the output rail on every successful
+  response, attaching any findings to `ModelResponse.guardrailFindings`.
+
 ## 17. CLI
 
 `packages/cli` implements `test0 init|connect|models|skills|tools|
-agents|memory|run|config|traces` using Commander, all operating on the
-same `Test0Runtime`. `test0 traces [list]` lists recorded traces,
-`test0 traces show <id>` prints every span in one, and `test0 traces
-usage` prints the LiteLLM-style per-model spend/latency/error summary
-plus live rpm/tpm/spend budget state for the current process.
+agents|memory|run|config|traces|safety|cache` using Commander, all
+operating on the same `Test0Runtime`. `test0 traces [list]` lists
+recorded traces, `test0 traces show <id>` prints every span in one, and
+`test0 traces usage` prints the LiteLLM-style per-model spend/latency/
+error summary plus live rpm/tpm/spend budget state for the current
+process. `test0 safety check "<text>"` runs text through both
+guardrail rails and shows any redaction. `test0 cache stats`/`test0
+cache clear` inspect and reset the in-process response cache.
 
 ## 18. MCP Interface
 
@@ -258,3 +305,13 @@ permissions, tool gateway, MCP server — is real, working logic. To go to
 production, replace `simulateCompletion` in each provider with an actual
 HTTP call (or, for `BrowserModelProvider`, a real `BrowserSessionAdapter`
 backed by a computer-use/browser MCP tool).
+
+The response cache's semantic tier is likewise a documented
+approximation: it uses Jaccard token-overlap instead of real embeddings
+so it needs no vector store or API key. `ResponseCache`'s public
+interface (`get`/`set`/`stats`) is the same shape GPTCache exposes, so
+swapping in a real embedding model + vector index is a drop-in change,
+not a redesign. The guardrail validators are regex/heuristic-based for
+the same offline-first reason — swap in a moderation API or fine-tuned
+classifier behind the `Validator` interface for production-grade recall
+on prompt-injection/toxicity detection.
