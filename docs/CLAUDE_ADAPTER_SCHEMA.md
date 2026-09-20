@@ -10,7 +10,7 @@ completed; external review remains pending.
 One opt-in Claude Code adapter using official **command hooks**. No new model
 provider, orchestration, dashboard, proxy routing, or unofficial authentication.
 Claude owns the model, tool execution, permission prompts, and conversation.
-Babysitter owns checkpoints, independent verification and completion evidence.
+Aletheia owns checkpoints, independent verification and completion evidence.
 
 ## Persistent adapter tables (`claude_schema.sql`)
 
@@ -60,7 +60,7 @@ not roll back after exit: other tools/editors may still be operating.
 ## Additional core event payloads
 
 - `task.started`: `adapter=claude-code`, native prompt identity, visibility,
-  hashes of babysitter.json and local/project Claude settings, goal, plan=[]
+  hashes of aletheia.json and local/project Claude settings, goal, plan=[]
 - `claude.hook`: hook name, native session/tool identifiers, reported metadata
 - `claude.tool.pending` / `tool.result`: call ID, tool, inputs/result, observation scope
 - `claude.prompt.superseded` / `claude.session.ended`: reason, retained checkpoint
@@ -68,7 +68,7 @@ not roll back after exit: other tools/editors may still be operating.
 - `escalation.requested`: consecutive failure count, `automatic_model_switch=false`
 - Existing `tool.valid`, `tool.invalid`, `tool.repaired`, `verification.result`,
   `failure`, `rollback.completed`, `retry.scheduled`, `task.finished` retain their
-  lifecycle meanings and remain consumable by `babysitter trace`.
+  lifecycle meanings and remain consumable by `aletheia trace`.
 
 ## Trust/visibility review
 
@@ -87,4 +87,4 @@ not roll back after exit: other tools/editors may still be operating.
   It does not lock out editors. No concurrent-writer safety claim.
 - Frozen control-file hashes prevent changed verification config from executing
   during a turn when the next hook still runs. Disabling/removing hooks outside
-  Babysitter remains beyond this hook's enforcement boundary.
+  Aletheia remains beyond this hook's enforcement boundary.

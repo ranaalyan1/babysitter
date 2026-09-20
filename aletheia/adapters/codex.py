@@ -24,7 +24,7 @@ class CodexAdapter(NativeHookAdapter):
     session_table = "codex_sessions"
     call_table = "codex_calls"
     schema_file = "codex_schema.sql"
-    control_files = ("babysitter.json", ".gitignore", ".codex/hooks.json", ".codex/config.toml", ".claude/settings.local.json", ".claude/settings.json")
+    control_files = ("aletheia.json", ".gitignore", ".codex/hooks.json", ".codex/config.toml", ".claude/settings.local.json", ".claude/settings.json")
 
     def validate_tool(self, name: str, arguments: dict) -> tuple[dict, list[str]]:
         if name.rsplit(".", 1)[-1] in {"spawn_agent", "send_input", "resume_agent", "wait_agent", "close_agent"} or name.startswith("multi_agent"):
@@ -51,7 +51,7 @@ class CodexAdapter(NativeHookAdapter):
             return copy.deepcopy(arguments), []
         cleaned, repairs = super().validate_tool(name, arguments)
         if repairs:
-            raise HookError("Retry with schema-correct argument types. Codex input rewrites require an allow decision; Babysitter does not auto-approve tools")
+            raise HookError("Retry with schema-correct argument types. Codex input rewrites require an allow decision; Aletheia does not auto-approve tools")
         return cleaned, []
 
     async def handle(self, payload: dict) -> dict:
@@ -66,7 +66,7 @@ class CodexAdapter(NativeHookAdapter):
                         self.task_id = task["id"]
                         self.guard_controls(task["id"])
                         self.store.event(task["id"], "observe", "codex.continuation.resumed", {"turn_id": payload.get("turn_id"), "same_task": True})
-                        return context("UserPromptSubmit", "Babysitter recovery continues the same task, checkpoint and retry budget. The previous failed patch was not successful completion.")
+                        return context("UserPromptSubmit", "Aletheia recovery continues the same task, checkpoint and retry budget. The previous failed patch was not successful completion.")
             payload = {**payload, "prompt_id": payload.get("turn_id")}
         if original_event == "PostToolUse":
             result = payload.get("tool_response")
@@ -81,7 +81,7 @@ class CodexAdapter(NativeHookAdapter):
                 if not call or call["state"] != "pending" or call["tool_name"] != "Bash" or call["input_json"] != json.dumps(redact(payload["tool_input"]), sort_keys=True):
                     raise HookError("Running command has no matching pending pre-tool callback")
                 self.store.event(self.task_id, "observe", "codex.tool.incomplete", {"tool_use_id": payload["tool_use_id"], "reason": "Native command still running; matching call remains pending"})
-                return context("PostToolUse", "Native command is still running. Poll it to completion; Babysitter will not verify or roll back while callbacks are pending.")
+                return context("PostToolUse", "Native command is still running. Poll it to completion; Aletheia will not verify or roll back while callbacks are pending.")
             explicit_error = isinstance(result, dict) and (result.get("isError") is True or result.get("is_error") is True
                               or result.get("exit_code", result.get("exitCode", 0)) not in (0, None))
             if payload["tool_name"] == "Bash":
@@ -120,7 +120,7 @@ def hook_main(root: Path, event: str, data: bytes) -> int:
         payload = parse_event(json.loads(data), event, root, EVENTS)
         short = event in {"SessionEnd", "Interrupt"}
         with project_lock(root, timeout_seconds=1 if short else 5):
-            store = Store(root / ".babysitter", timeout=0.2 if short else 5)
+            store = Store(root / ".aletheia", timeout=0.2 if short else 5)
             adapter = None
             try:
                 if short:
@@ -145,7 +145,7 @@ def hook_main(root: Path, event: str, data: bytes) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Installed Babysitter Codex hook handler")
+    parser = argparse.ArgumentParser(description="Installed Aletheia Codex hook handler")
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--event", required=True, choices=EVENTS)
     args = parser.parse_args(argv)

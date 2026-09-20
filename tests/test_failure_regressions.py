@@ -6,10 +6,10 @@ import sys
 import httpx
 import pytest
 
-from babysitter.cli import main
-from babysitter.provider import OpenAIProvider, ProviderError
-from babysitter.tools import TOOLS
-from babysitter.verify import Verifier
+from aletheia.cli import main
+from aletheia.provider import OpenAIProvider, ProviderError
+from aletheia.tools import TOOLS
+from aletheia.verify import Verifier
 from conftest import answer, call, tool_response
 from test_protocol import client_for
 
@@ -19,10 +19,10 @@ async def test_unknown_task_returns_404_not_internal_error(workspace, setup_runt
     async with client_for(workspace, config, [answer()]) as (client, _, _):
         response = await client.post('/v1/chat/completions', json={
             'model': 'weak', 'messages': [{'role': 'user', 'content': 'Check'}]},
-            headers={'X-Babysitter-Task': 'nonexistent'})
+            headers={'X-Aletheia-Task': 'nonexistent'})
         assert response.status_code == 404
         assert response.json()['error']['message'] == 'Unknown task'
-        assert response.headers['X-Babysitter-Verified'] == 'false'
+        assert response.headers['X-Aletheia-Verified'] == 'false'
 
 
 @pytest.mark.parametrize('payload', [[], {'choices': [None]}, {'choices': ['broken']}])
@@ -90,15 +90,15 @@ async def test_relay_reused_tool_id_does_not_break_continuation(workspace, setup
             response = await client.post('/v1/chat/completions', json={
                 'model': 'weak', 'messages': messages, 'tools': TOOLS}, headers=headers)
             assert response.status_code == 200, response.text
-            headers = {'X-Babysitter-Task': response.headers['X-Babysitter-Task']}
+            headers = {'X-Aletheia-Task': response.headers['X-Aletheia-Task']}
             if round_number < 2:
                 assistant = response.json()['choices'][0]['message']
                 messages.extend([assistant, {'role': 'tool', 'tool_call_id': assistant['tool_calls'][0]['id'], 'content': 'contents'}])
-        assert response.headers['X-Babysitter-State'] == 'verified_complete'
+        assert response.headers['X-Aletheia-State'] == 'verified_complete'
 
 
 @pytest.mark.parametrize('configuration', ['[]', '{"unknown_option":true}', '{"max_attempts":true}', '{"command_timeout":NaN}'])
 def test_bad_config_reports_clean_cli_error(workspace, capsys, configuration):
-    (workspace / 'babysitter.json').write_text(configuration)
+    (workspace / 'aletheia.json').write_text(configuration)
     assert main(['--root', str(workspace), 'doctor', '--offline']) == 1
-    assert 'babysitter:' in capsys.readouterr().err
+    assert 'aletheia:' in capsys.readouterr().err

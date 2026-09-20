@@ -18,10 +18,10 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from babysitter.adapters.codex_install import install
-from babysitter.config import Config
-from babysitter.metrics import metrics
-from babysitter.state import Store, uid
+from aletheia.adapters.codex_install import install
+from aletheia.config import Config
+from aletheia.metrics import metrics
+from aletheia.state import Store, uid
 from demo import create_fixture
 
 BAD = "def add(a: int, b: int) -> int:\n    return a - b\n"
@@ -79,16 +79,16 @@ def run(agent: str, executable: str, output: Path | None = None, project_path: P
         fixed_lines = indent + comment + "\n" + old_line
         bad, good = content.replace(old_line, broken_line), content.replace(old_line, fixed_lines)
         ignore = root / ".gitignore"
-        ignore.write_text(ignore.read_text().rstrip() + "\n.babysitter/\n")
+        ignore.write_text(ignore.read_text().rstrip() + "\n.aletheia/\n")
     else:
-        root = Path.cwd() / ".babysitter" / (agent + "-demo-" + uid()[:8])
+        root = Path.cwd() / ".aletheia" / (agent + "-demo-" + uid()[:8])
         create_fixture(root)
     Config(test_command=[sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
            typecheck_command=[sys.executable, "-m", "mypy", "--no-incremental"] + ([] if project_path else ["calc.py"])).save(root)
-    home = root / ".babysitter" / "native-home"
+    home = root / ".aletheia" / "native-home"
     home.mkdir(parents=True)
     calls: list[dict] = []
-    marker = "native-babysitter-e2e"
+    marker = "native-aletheia-e2e"
 
     class ModelFixture(BaseHTTPRequestHandler):
         def log_message(self, *args):
@@ -99,7 +99,7 @@ def run(agent: str, executable: str, output: Path | None = None, project_path: P
             main_request = marker in json.dumps(body.get("messages", body.get("input", [])))
             if main_request:
                 calls.append(body)
-                (root / ".babysitter" / "model-requests.json").write_text(json.dumps(calls, indent=2))
+                (root / ".aletheia" / "model-requests.json").write_text(json.dumps(calls, indent=2))
             number = len(calls)
             if agent == "codex":
                 if main_request and number in {1, 3}:
@@ -163,15 +163,15 @@ trust_level = "trusted"
             "provider": {"scripted": {"npm": "@ai-sdk/openai-compatible", "name": "Scripted local validation only",
                 "options": {"baseURL": endpoint, "apiKey": "local-fixture-not-a-real-key"},
                 "models": {"fixture": {"name": "fixture", "limit": {"context": 32768, "output": 4096}}}}}}, indent=2))
-        command = [sys.executable, "-m", "babysitter.cli", "--root", str(root), "opencode", "run", goal,
+        command = [sys.executable, "-m", "aletheia.cli", "--root", str(root), "opencode", "run", goal,
                    "--executable", executable, "--timeout", "120"]
     started = time.monotonic()
     try:
         version = subprocess.check_output([executable, "--version"], env=env, text=True, timeout=30).strip()
         result = subprocess.run(command, cwd=root, env=env, capture_output=True, text=True, timeout=300)
-        (root / ".babysitter" / "native-stdout.log").write_text(result.stdout)
-        (root / ".babysitter" / "native-stderr.log").write_text(result.stderr)
-        store = Store(root / ".babysitter")
+        (root / ".aletheia" / "native-stdout.log").write_text(result.stdout)
+        (root / ".aletheia" / "native-stderr.log").write_text(result.stderr)
+        store = Store(root / ".aletheia")
         try:
             trace = store.trace()
         finally:
@@ -188,7 +188,7 @@ trust_level = "trusted"
                   "test_only_hook_trust_bypass": agent == "codex", "permissions_auto_approved_by_adapter": False,
                   "duration_seconds": round(time.monotonic() - started, 3)}
         if result.returncode or statuses != ["failed", "passed"] or report["metrics"]["tasks_verified_complete"] != 1 or (root / filename).read_text() != good:
-            raise RuntimeError(f"Native validation failed: {json.dumps(report)}\n{result.stdout[-3000:]}\n{result.stderr[-3000:]}\nInspect {root / '.babysitter'}")
+            raise RuntimeError(f"Native validation failed: {json.dumps(report)}\n{result.stdout[-3000:]}\n{result.stderr[-3000:]}\nInspect {root / '.aletheia'}")
         if len(trace["tasks"]) != 1 or not any(e["kind"] == "rollback.completed" for e in trace["events"]):
             raise RuntimeError("Expected one task and an inspectable rollback")
         if output:

@@ -118,7 +118,7 @@ def anthropic_response(response: dict) -> dict:
     for call in message.get("tool_calls", []):
         blocks.append({"type": "tool_use", "id": call["id"], "name": call["function"]["name"], "input": json.loads(call["function"]["arguments"])})
     usage = response.get("usage", {})
-    return {"id": "msg_" + uid(), "type": "message", "role": "assistant", "model": response.get("model", "babysitter"),
+    return {"id": "msg_" + uid(), "type": "message", "role": "assistant", "model": response.get("model", "aletheia"),
             "content": blocks, "stop_reason": "tool_use" if message.get("tool_calls") else "end_turn", "stop_sequence": None,
             "usage": {"input_tokens": usage.get("prompt_tokens", 0), "output_tokens": usage.get("completion_tokens", 0)}}
 
@@ -128,7 +128,7 @@ def stream_events(response: dict, protocol: str, include_usage: bool = False):
         return (("event: " + event + "\n") if event else "") + "data: " + json.dumps(data) + "\n\n"
     if protocol == "openai":
         base = {"id": response.get("id", "chatcmpl-" + uid()), "object": "chat.completion.chunk",
-                "created": response.get("created", int(time.time())), "model": response.get("model", "babysitter")}
+                "created": response.get("created", int(time.time())), "model": response.get("model", "aletheia")}
         message = response["choices"][0]["message"]
         yield sse({**base, "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": None}]})
         if message.get("content"):

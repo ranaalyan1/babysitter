@@ -8,11 +8,11 @@ from pathlib import Path
 import pytest
 
 
-@pytest.mark.skipif(not os.environ.get('BABYSITTER_CLAUDE_BIN'), reason='Set BABYSITTER_CLAUDE_BIN to an officially installed Claude Code executable')
+@pytest.mark.skipif(not os.environ.get('ALETHEIA_CLAUDE_BIN'), reason='Set ALETHEIA_CLAUDE_BIN to an officially installed Claude Code executable')
 def test_actual_claude_cli_recovers_using_installed_hooks(tmp_path):
     script = Path(__file__).resolve().parents[1] / 'scripts' / 'claude_demo.py'
     output = tmp_path / 'native-report.json'
-    result = subprocess.run([sys.executable, str(script), '--claude', os.environ['BABYSITTER_CLAUDE_BIN'], '--output', str(output)],
+    result = subprocess.run([sys.executable, str(script), '--claude', os.environ['ALETHEIA_CLAUDE_BIN'], '--output', str(output)],
                             cwd=tmp_path, capture_output=True, text=True, timeout=150)
     assert result.returncode == 0, result.stdout + result.stderr
     report = json.loads(output.read_text())

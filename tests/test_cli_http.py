@@ -7,7 +7,7 @@ import pytest
 
 def demo_module():
     path = Path(__file__).resolve().parents[1] / 'scripts' / 'demo.py'
-    spec = importlib.util.spec_from_file_location('babysitter_demo', path)
+    spec = importlib.util.spec_from_file_location('aletheia_demo', path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -27,5 +27,5 @@ async def test_cli_server_recovery_over_real_http(tmp_path, fail_twice):
     assert report['transport'] == 'CLI server over TCP + real HTTP upstream'
     assert report['metrics']['verification_failures_caught_before_completion'] == (2 if fail_twice else 1)
     assert report['metrics']['escalations'] == int(fail_twice)
-    assert (root / '.babysitter' / 'demo-server.log').exists()
-    assert 'Application shutdown complete' in (root / '.babysitter' / 'demo-server.log').read_text()
+    assert (root / '.aletheia' / 'demo-server.log').exists()
+    assert 'Application shutdown complete' in (root / '.aletheia' / 'demo-server.log').read_text()

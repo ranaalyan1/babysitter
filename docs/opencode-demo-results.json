@@ -3,7 +3,7 @@
   "agent_version": "1.18.31",
   "real_model_tested": false,
   "exit_code": 0,
-  "root": "/home/user/test0/.babysitter/opencode-demo-fc22f1d4",
+  "root": "/home/user/test0/.aletheia/opencode-demo-fc22f1d4",
   "model_requests": 6,
   "verification_statuses": [
     "failed",

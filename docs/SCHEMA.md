@@ -1,7 +1,7 @@
 # Shared supervision contract — v1 (frozen)
 
 Schema version: **1**. This contract is defined before feature code. SQLite DDL is
-`babysitter/schema.sql`; typed representations are in `babysitter/state.py`.
+`aletheia/schema.sql`; typed representations are in `aletheia/state.py`.
 Breaking changes require a migration and a new schema version. JSON payloads may
 add fields; consumers must ignore unknown fields. No silent event rewrites.
 
@@ -70,7 +70,7 @@ Only protocol messages/tool declarations/results and independent project checks
 are observable. No claim of IDE internals, hidden plans, or external tool
 execution visibility. In relay mode, caller must return the task header on each
 request, execute clean tool calls, and report results. In managed mode, only
-explicitly enabled local `read_file` / `write_file` calls run inside Babysitter.
+explicitly enabled local `read_file` / `write_file` calls run inside Aletheia.
 A process-wide project lock serializes requests, not external editors.
 
 ## Contract review (implementation self-review, not user approval)

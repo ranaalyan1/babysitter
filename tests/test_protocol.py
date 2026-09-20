@@ -4,11 +4,11 @@ from contextlib import asynccontextmanager
 import httpx
 import pytest
 
-from babysitter.protocol import normalize
-from babysitter.provider import OpenAIProvider, ProviderError
-from babysitter.runtime import SupervisionError
-from babysitter.server import create_app
-from babysitter.tools import TOOLS
+from aletheia.protocol import normalize
+from aletheia.provider import OpenAIProvider, ProviderError
+from aletheia.runtime import SupervisionError
+from aletheia.server import create_app
+from aletheia.tools import TOOLS
 from conftest import ScriptedProvider, answer, call, tool_response
 
 
@@ -24,11 +24,11 @@ async def client_for(workspace, config, responses):
 async def test_openai_managed_roundtrip(workspace, setup_runtime):
     config, _, _, _ = setup_runtime
     async with client_for(workspace, config, [tool_response(call()), answer()]) as (client, app, provider):
-        response = await client.post("/v1/chat/completions", json={"model": "babysitter", "messages": [{"role": "user", "content": "Fix"}]},
-                                     headers={"X-Babysitter-Execute": "true"})
+        response = await client.post("/v1/chat/completions", json={"model": "aletheia", "messages": [{"role": "user", "content": "Fix"}]},
+                                     headers={"X-Aletheia-Execute": "true"})
         assert response.status_code == 200, response.text
-        assert response.headers["X-Babysitter-State"] == "verified_complete"
-        assert response.headers["X-Babysitter-Verified"] == "true"
+        assert response.headers["X-Aletheia-State"] == "verified_complete"
+        assert response.headers["X-Aletheia-Verified"] == "true"
         assert response.json()["choices"][0]["message"]["content"] == "Done"
         assert (await client.get("/v1/models")).json()["data"][0]["id"] == "weak"
 
@@ -37,11 +37,11 @@ async def test_openai_managed_roundtrip(workspace, setup_runtime):
 async def test_buffered_streaming(protocol, path, workspace, setup_runtime):
     config, _, _, _ = setup_runtime
     async with client_for(workspace, config, [answer("Verified")]) as (client, _, _):
-        body = {"model": "babysitter", "max_tokens": 100, "messages": [{"role": "user", "content": "Check"}], "stream": True}
+        body = {"model": "aletheia", "max_tokens": 100, "messages": [{"role": "user", "content": "Check"}], "stream": True}
         response = await client.post(path, json=body)
         assert response.status_code == 200, response.text
-        assert response.headers["X-Babysitter-Verified"] == "true"
-        assert response.headers["X-Babysitter-Stream"] == "buffered-until-validated"
+        assert response.headers["X-Aletheia-Verified"] == "true"
+        assert response.headers["X-Aletheia-Stream"] == "buffered-until-validated"
         assert "Verified" in response.text
         assert ("[DONE]" if protocol == "openai" else "event: message_stop") in response.text
 
@@ -52,17 +52,17 @@ async def test_relay_is_awaiting_not_complete_and_resumes(workspace, setup_runti
         messages = [{"role": "user", "content": "Add a comment"}]
         response = await client.post("/v1/chat/completions", json={"model": "weak", "messages": messages, "tools": TOOLS})
         assert response.status_code == 200, response.text
-        task_id = response.headers["X-Babysitter-Task"]
-        assert response.headers["X-Babysitter-State"] == "awaiting_tools"
-        assert response.headers["X-Babysitter-Verified"] == "false"
+        task_id = response.headers["X-Aletheia-Task"]
+        assert response.headers["X-Aletheia-State"] == "awaiting_tools"
+        assert response.headers["X-Aletheia-Verified"] == "false"
         assert "def add" in (workspace / "calc.py").read_text()  # relay did NOT execute
         assistant = response.json()["choices"][0]["message"]
         assert json.loads(assistant["tool_calls"][0]["function"]["arguments"]) == {"path": "calc.py", "content": "# caller edit\n"}
         (workspace / "calc.py").write_text((workspace / "calc.py").read_text() + "# caller actually changed it\n")
         messages.extend([assistant, {"role": "tool", "tool_call_id": "call-1", "content": '{"ok":true}'}])
-        response = await client.post("/v1/chat/completions", json={"model": "weak", "messages": messages, "tools": TOOLS}, headers={"X-Babysitter-Task": task_id})
+        response = await client.post("/v1/chat/completions", json={"model": "weak", "messages": messages, "tools": TOOLS}, headers={"X-Aletheia-Task": task_id})
         assert response.status_code == 200, response.text
-        assert response.headers["X-Babysitter-State"] == "verified_complete"
+        assert response.headers["X-Aletheia-State"] == "verified_complete"
         assert any(e["kind"] == "client.tool_result" for e in app.state.runtime.store.trace(task_id)["events"])
 
 
@@ -73,8 +73,8 @@ async def test_new_task_blocked_while_relay_owns_workspace(workspace, setup_runt
         response = await client.post("/v1/chat/completions", json=body)
         assert response.status_code == 200
         assert (await client.post("/v1/chat/completions", json=body)).status_code == 409
-        task_id = response.headers["X-Babysitter-Task"]
-        assert (await client.post("/v1/chat/completions", json=body, headers={"X-Babysitter-Task": task_id})).status_code == 409
+        task_id = response.headers["X-Aletheia-Task"]
+        assert (await client.post("/v1/chat/completions", json=body, headers={"X-Aletheia-Task": task_id})).status_code == 409
 
 
 async def test_anthropic_tool_use_roundtrip(workspace, setup_runtime):
@@ -82,14 +82,14 @@ async def test_anthropic_tool_use_roundtrip(workspace, setup_runtime):
     tools = [{"name": t["function"]["name"], "description": t["function"]["description"], "input_schema": t["function"]["parameters"]} for t in TOOLS]
     async with client_for(workspace, config, [tool_response(call("read_file", args={"path": "calc.py"})), answer()]) as (client, _, provider):
         messages = [{"role": "user", "content": "Read the file"}]
-        body = {"model": "babysitter", "max_tokens": 500, "system": [{"type": "text", "text": "Be precise"}], "messages": messages, "tools": tools}
+        body = {"model": "aletheia", "max_tokens": 500, "system": [{"type": "text", "text": "Be precise"}], "messages": messages, "tools": tools}
         response = await client.post("/v1/messages", json=body)
         assert response.status_code == 200, response.text
         data = response.json()
         assert data["stop_reason"] == "tool_use" and data["content"][0]["input"] == {"path": "calc.py"}
         messages.extend([{"role": "assistant", "content": data["content"]}, {"role": "user", "content": [
             {"type": "tool_result", "tool_use_id": "call-1", "content": [{"type": "text", "text": "file contents"}]}]}])
-        response = await client.post("/v1/messages", json=body, headers={"X-Babysitter-Task": response.headers["X-Babysitter-Task"]})
+        response = await client.post("/v1/messages", json=body, headers={"X-Aletheia-Task": response.headers["X-Aletheia-Task"]})
         assert response.status_code == 200, response.text
         assert response.json()["stop_reason"] == "end_turn"
         assert provider.requests[0]["messages"][0] == {"role": "system", "content": "Be precise"}
@@ -101,7 +101,7 @@ async def test_unavailable_response_is_not_success(workspace, setup_runtime):
     async with client_for(workspace, config, [answer("Success!")]) as (client, _, _):
         response = await client.post("/v1/chat/completions", json={"model": "weak", "messages": [{"role": "user", "content": "Check"}]})
         assert response.status_code == 409
-        assert response.headers["X-Babysitter-State"] == "verification_unavailable"
+        assert response.headers["X-Aletheia-State"] == "verification_unavailable"
         assert "NOT verified" in response.text
 
 
@@ -157,12 +157,12 @@ async def test_relay_continuation_survives_runtime_restart(workspace, setup_runt
     async with client_for(workspace, config, [tool_response(call("read_file", args={"path": "calc.py"}))]) as (client, _, _):
         response = await client.post("/v1/chat/completions", json={"model": "weak", "messages": messages, "tools": TOOLS})
         assert response.status_code == 200
-        task_id = response.headers["X-Babysitter-Task"]
+        task_id = response.headers["X-Aletheia-Task"]
         messages.extend([response.json()["choices"][0]["message"], {"role": "tool", "tool_call_id": "call-1", "content": "contents"}])
     async with client_for(workspace, config, [answer()]) as (client, _, _):
-        response = await client.post("/v1/chat/completions", json={"model": "weak", "messages": messages, "tools": TOOLS}, headers={"X-Babysitter-Task": task_id})
+        response = await client.post("/v1/chat/completions", json={"model": "weak", "messages": messages, "tools": TOOLS}, headers={"X-Aletheia-Task": task_id})
         assert response.status_code == 200, response.text
-        assert response.headers["X-Babysitter-Verified"] == "true"
+        assert response.headers["X-Aletheia-Verified"] == "true"
 
 
 async def test_interrupted_turn_is_failed_not_verified_on_restart(workspace, setup_runtime):
@@ -180,9 +180,9 @@ async def test_relay_tool_failure_context_reaches_retry(workspace, setup_runtime
     async with client_for(workspace, config, [tool_response(call()), answer()]) as (client, app, provider):
         messages = [{"role": "user", "content": "Change"}]
         response = await client.post("/v1/chat/completions", json={"model": "weak", "messages": messages, "tools": TOOLS})
-        task_id = response.headers["X-Babysitter-Task"]
+        task_id = response.headers["X-Aletheia-Task"]
         messages.extend([response.json()["choices"][0]["message"], {"role": "tool", "tool_call_id": "call-1", "content": '{"error":"permission denied"}'}])
-        response = await client.post("/v1/chat/completions", json={"model": "weak", "messages": messages, "tools": TOOLS}, headers={"X-Babysitter-Task": task_id})
+        response = await client.post("/v1/chat/completions", json={"model": "weak", "messages": messages, "tools": TOOLS}, headers={"X-Aletheia-Task": task_id})
         assert response.status_code == 200
         assert "permission denied" in json.dumps(provider.requests[-1]["messages"])
         assert any(e["kind"] == "rollback.completed" for e in app.state.runtime.store.trace(task_id)["events"])

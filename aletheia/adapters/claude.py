@@ -32,11 +32,11 @@ def hook_error(event: str, exc: Exception, store: Store | None = None, adapter: 
                 store.event(task_id, "recover", "failure", {"class": "unsafe-change", "context": message, "worktree_retained": True}, state="failed")
         except Exception:
             pass  # Persistence failure must still produce a blocking decision.
-    print("Babysitter hook error: " + message, file=sys.stderr)
+    print("Aletheia hook error: " + message, file=sys.stderr)
     if event == "PreToolUse":
         return deny(message)
     if event == "UserPromptSubmit":
-        return {"decision": "block", "reason": "Babysitter: NOT VERIFIED. " + message}
+        return {"decision": "block", "reason": "Aletheia: NOT VERIFIED. " + message}
     return halt(message)
 
 
@@ -46,7 +46,7 @@ def hook_main(root: Path, event: str, data: bytes) -> int:
             raise HookError("Hook input exceeds 2 MB")
         payload = parse_event(json.loads(data), event, root)
         with project_lock(root):
-            store = Store(root / ".babysitter")
+            store = Store(root / ".aletheia")
             adapter = None
             try:
                 config = Config.load(root)
@@ -69,7 +69,7 @@ def hook_main(root: Path, event: str, data: bytes) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Babysitter's installed Claude Code hook handler")
+    parser = argparse.ArgumentParser(description="Aletheia's installed Claude Code hook handler")
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--event", choices=EVENTS, required=True)
     args = parser.parse_args(argv)

@@ -1,11 +1,12 @@
-# Babysitter brand & interface system
+# Aletheia brand & interface system
 
 ## The idea: a second pair of eyes
 
-Babysitter is calm, observant and practical. It makes software agents accountable
+Aletheia is calm, observant and practical. It makes software agents accountable
 without presenting itself as another agent or an all-powerful security boundary.
-The name is **Babysitter** in prose and **babysitter.** in the wordmark. It is one
-word—not “Baby Sitter.” Avoid infant/care-service imagery: this is developer tooling.
+The name is **Aletheia** in prose and **aletheia.** in the wordmark. Aletheia
+(αλήθεια, Greek for “truth”) is one word: claims are only real once verified.
+Avoid infant/care-service imagery: this is developer tooling.
 
 The original **watchful bracket** mark combines rounded code brackets, two alert
 eyes, and a small check-shaped smile. Brackets suggest code and a protective
@@ -22,7 +23,7 @@ boundary; the check connects the face directly to verification.
 - `docs/brand/social-card.png` — 1200×630 social/repository image.
 - `docs/brand/console-desktop.png` — actual browser capture of labeled demo mode.
 - `docs/brand/console-mobile.png` — actual narrow-screen browser capture.
-- `babysitter/web/assets/oversight.svg` — original in-product workflow illustration.
+- `aletheia/web/assets/oversight.svg` — original in-product workflow illustration.
 
 Keep at least one eye-width of clear space around the mark. Minimum icon size:
 24 px; use 32 px or larger in primary navigation. Do not stretch it, rotate it,
@@ -73,5 +74,6 @@ Supporting line: **A little oversight. A lot more confidence.**
 Demo screenshots must retain their DEMO label. Do not turn illustrative metrics
 into measured product results or present a scripted endpoint as a real model.
 
-The original assets are supplied in this repository; project-wide licensing has
-not been selected. Font license terms are supplied separately with the font.
+The original assets are supplied in this repository under the project's Apache
+License 2.0 (see `LICENSE`). Font license terms are supplied separately with the
+font (SIL Open Font License).

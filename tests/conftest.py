@@ -7,10 +7,10 @@ import sys
 
 import pytest
 
-from babysitter.config import Config
-from babysitter.project import Project
-from babysitter.runtime import Runtime
-from babysitter.state import Store
+from aletheia.config import Config
+from aletheia.project import Project
+from aletheia.runtime import Runtime
+from aletheia.state import Store
 
 
 def answer(content="Done", model="weak"):
@@ -54,7 +54,7 @@ class ScriptedProvider:
 def workspace(tmp_path):
     root = tmp_path / "repo"
     root.mkdir()
-    (root / ".gitignore").write_text(".babysitter/\n__pycache__/\n.pytest_cache/\n.mypy_cache/\n.env\n")
+    (root / ".gitignore").write_text(".aletheia/\n__pycache__/\n.pytest_cache/\n.mypy_cache/\n.env\n")
     (root / "calc.py").write_text("def add(a: int, b: int) -> int:\n    return a + b\n")
     (root / "test_calc.py").write_text("from calc import add\n\ndef test_add():\n    assert add(2, 3) == 5\n")
     subprocess.run(["git", "init", "-q", str(root)], check=True)
@@ -69,7 +69,7 @@ def setup_runtime(workspace):
                     test_command=[sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
                     typecheck_command=[sys.executable, "-m", "mypy", "calc.py", "--no-incremental"],
                     max_attempts=8, command_timeout=30)
-    store = Store(workspace / ".babysitter")
+    store = Store(workspace / ".aletheia")
     project = Project(workspace, store)
     def build(responses):
         provider = ScriptedProvider(responses)

@@ -3,24 +3,55 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "babysitter-runtime"
-version = "0.4.0"
+name = "aletheia-runtime"
+version = "1.0.0"
 description = "Local evidence-driven supervision for AI coding agents"
 readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [
+  { name = "ranaalyan1" },
+]
+keywords = [
+  "ai",
+  "agents",
+  "coding-agents",
+  "supervision",
+  "verification",
+  "testing",
+  "claude-code",
+  "codex",
+  "opencode",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Quality Assurance",
+  "Topic :: Software Development :: Testing",
+]
 dependencies = ["fastapi>=0.115,<1", "httpx>=0.27,<1", "uvicorn>=0.30,<1", "jsonschema>=4.23,<5", "json-repair>=0.30,<1"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<9", "pytest-asyncio>=0.24,<1", "mypy>=1.13,<2", "types-jsonschema>=4.23"]
 
 [project.urls]
-Repository = "https://github.com/ranaalyan1/test0"
+Homepage = "https://github.com/ranaalyan1/babysitter"
+Repository = "https://github.com/ranaalyan1/babysitter"
+Changelog = "https://github.com/ranaalyan1/babysitter/blob/main/CHANGELOG.md"
+Issues = "https://github.com/ranaalyan1/babysitter/issues"
 
 [project.scripts]
-babysitter = "babysitter.cli:main"
+aletheia = "aletheia.cli:main"
 
 [tool.setuptools.package-data]
-babysitter = ["schema.sql", "claude_schema.sql", "codex_schema.sql", "web/*.html", "web/assets/*", "web/guides/*"]
+aletheia = ["schema.sql", "claude_schema.sql", "codex_schema.sql", "web/*.html", "web/assets/*", "web/guides/*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -32,4 +63,4 @@ check_untyped_defs = true
 ignore_missing_imports = true
 
 [tool.setuptools.packages.find]
-include = ["babysitter*"]
+include = ["aletheia*"]

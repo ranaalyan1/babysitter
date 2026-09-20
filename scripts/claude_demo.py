@@ -18,16 +18,16 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from babysitter.adapters.claude_install import install
-from babysitter.config import Config
-from babysitter.metrics import metrics
-from babysitter.protocol import anthropic_response, stream_events
-from babysitter.state import Store, uid
+from aletheia.adapters.claude_install import install
+from aletheia.config import Config
+from aletheia.metrics import metrics
+from aletheia.protocol import anthropic_response, stream_events
+from aletheia.state import Store, uid
 from demo import create_fixture
 
 
 def run(claude: str, output: Path | None = None) -> dict:
-    root = Path.cwd() / ".babysitter" / ("claude-demo-" + uid()[:8])
+    root = Path.cwd() / ".aletheia" / ("claude-demo-" + uid()[:8])
     create_fixture(root)
     Config(test_command=[sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
            typecheck_command=[sys.executable, "-m", "mypy"]).save(root)
@@ -35,7 +35,7 @@ def run(claude: str, output: Path | None = None) -> dict:
     bad = "def add(a: int, b: int) -> int:\n    return a - b\n"
     good = "def add(a: int, b: int) -> int:\n    # Corrected after independent verification.\n    return a + b\n"
     calls = []
-    marker = "native-babysitter-e2e"
+    marker = "native-aletheia-e2e"
     filename = str(root / "calc.py")
 
     class MessagesFixture(BaseHTTPRequestHandler):
@@ -78,13 +78,13 @@ def run(claude: str, output: Path | None = None) -> dict:
     server = ThreadingHTTPServer(("127.0.0.1", 0), MessagesFixture)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    home = root / ".babysitter" / "claude-home"
+    home = root / ".aletheia" / "claude-home"
     home.mkdir()
     # Never inherit real provider credentials, cloud-provider switches or user
     # Claude configuration. The fixture key is deliberately not a real credential.
     env = {key: value for key, value in os.environ.items() if key in {"PATH", "LANG", "LC_ALL", "TMPDIR"}}
     env.update({"HOME": str(home), "CLAUDE_CONFIG_DIR": str(home),
-                "ANTHROPIC_BASE_URL": f"http://127.0.0.1:{server.server_port}", "ANTHROPIC_API_KEY": "babysitter-fixture-not-a-real-key",
+                "ANTHROPIC_BASE_URL": f"http://127.0.0.1:{server.server_port}", "ANTHROPIC_API_KEY": "aletheia-fixture-not-a-real-key",
                 "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1", "DISABLE_TELEMETRY": "1", "DISABLE_ERROR_REPORTING": "1",
                 "NO_PROXY": "127.0.0.1,localhost"})
     started = time.monotonic()
@@ -92,20 +92,20 @@ def run(claude: str, output: Path | None = None) -> dict:
         version = subprocess.check_output([claude, "--version"], env=env, text=True, timeout=15).strip()
         command = [claude, "-p", f"{marker}: Update calc.py; recover from verification failures before finishing.",
                    "--model", "claude-haiku-4-5", "--tools", "Read,Write", "--allowedTools", "Read", "Write",
-                   "--max-turns", "10", "--output-format", "json", "--debug-file", str(root / ".babysitter" / "claude-debug.log")]
+                   "--max-turns", "10", "--output-format", "json", "--debug-file", str(root / ".aletheia" / "claude-debug.log")]
         result = subprocess.run(command, cwd=root, env=env, capture_output=True, text=True, timeout=120)
-        (root / ".babysitter" / "claude-stdout.json").write_text(result.stdout)
-        (root / ".babysitter" / "claude-stderr.log").write_text(result.stderr)
+        (root / ".aletheia" / "claude-stdout.json").write_text(result.stdout)
+        (root / ".aletheia" / "claude-stderr.log").write_text(result.stderr)
         if result.returncode != 0:
-            raise RuntimeError(f"Claude CLI returned {result.returncode}: {result.stderr[-2000:]} {result.stdout[-2000:]}. Logs: {root / '.babysitter'}")
-        store = Store(root / ".babysitter")
+            raise RuntimeError(f"Claude CLI returned {result.returncode}: {result.stderr[-2000:]} {result.stdout[-2000:]}. Logs: {root / '.aletheia'}")
+        store = Store(root / ".aletheia")
         try:
             trace = store.trace()
         finally:
             store.close()
-        (root / ".babysitter" / "trace.json").write_text(json.dumps(trace, indent=2))
+        (root / ".aletheia" / "trace.json").write_text(json.dumps(trace, indent=2))
         if len(trace["tasks"]) != 1 or trace["tasks"][0]["state"] != "verified_complete":
-            raise RuntimeError(f"Claude ended but Babysitter did NOT verify the task. Inspect {root / '.babysitter'}")
+            raise RuntimeError(f"Claude ended but Aletheia did NOT verify the task. Inspect {root / '.aletheia'}")
         evidence = [e["payload"] for e in trace["events"] if e["kind"] == "verification.result"]
         assert [e["status"] for e in evidence] == ["failed", "passed"]
         assert (root / "calc.py").read_text() == good
@@ -117,7 +117,7 @@ def run(claude: str, output: Path | None = None) -> dict:
                   "tool_results_observed": len([e for e in trace["events"] if e["kind"] == "tool.result"]),
                   "verification": [{"status": e["status"], "commands": [{"name": c["name"], "exit_code": c["exit_code"],
                                    "output_tail": (c["stdout"] + c["stderr"])[-1500:]} for c in e["commands"]]} for e in evidence],
-                  "metrics": metrics(trace), "trace": str(root / ".babysitter" / "trace.json")}
+                  "metrics": metrics(trace), "trace": str(root / ".aletheia" / "trace.json")}
         if output:
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_text(json.dumps(report, indent=2) + "\n")

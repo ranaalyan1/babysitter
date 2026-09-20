@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Reproducible end-to-end fault injection, NOT a real-model quality benchmark.
 
-The upstream fixture speaks actual HTTP OpenAI Chat Completions. The Babysitter
+The upstream fixture speaks actual HTTP OpenAI Chat Completions. The Aletheia
 FastAPI application is exercised through ASGI, or the real CLI server over TCP
 with --http. File tools, git checkpoints, pytest, mypy, SQLite, rollback and retries
 are all real.
@@ -24,10 +24,10 @@ from pathlib import Path
 
 import httpx
 
-from babysitter.config import Config
-from babysitter.metrics import metrics
-from babysitter.server import create_app
-from babysitter.state import Store, uid
+from aletheia.config import Config
+from aletheia.metrics import metrics
+from aletheia.server import create_app
+from aletheia.state import Store, uid
 
 
 @asynccontextmanager
@@ -47,7 +47,7 @@ async def runtime_client(root: Path, config: Config, over_http: bool):
     token = secrets.token_urlsafe(32)
     env = {**os.environ, config.token_env: token, "PYTHONUNBUFFERED": "1"}
     process = await asyncio.create_subprocess_exec(
-        sys.executable, "-m", "babysitter.cli", "--root", str(root), "start", "--host", "0.0.0.0", "--port", "0",
+        sys.executable, "-m", "aletheia.cli", "--root", str(root), "start", "--host", "0.0.0.0", "--port", "0",
         env=env, stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
     output = bytearray()
     drain = None
@@ -63,7 +63,7 @@ async def runtime_client(root: Path, config: Config, over_http: bool):
             else:
                 raise RuntimeError("CLI server failed to start:\n" + output.decode(errors="replace"))
         drain = asyncio.create_task(process.communicate())
-        store = Store(root / ".babysitter")
+        store = Store(root / ".aletheia")
         try:
             async with httpx.AsyncClient(base_url=f"http://127.0.0.1:{port}", timeout=300, trust_env=False,
                                          headers={"Authorization": f"Bearer {token}"}) as client:
@@ -84,7 +84,7 @@ async def runtime_client(root: Path, config: Config, over_http: bool):
         if drain:
             remainder, _ = await drain
             output.extend(remainder)
-        log = root / ".babysitter" / "demo-server.log"
+        log = root / ".aletheia" / "demo-server.log"
         log.parent.mkdir(parents=True, exist_ok=True)
         log.write_bytes(output)
 
@@ -116,7 +116,7 @@ async def run_demo(root: Path, filename: str, bad: str, good: str, *, fail_twice
             result = {"id": "chatcmpl-fixture-" + str(number), "object": "chat.completion", "created": int(time.time()),
                       "model": body["model"], "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
             if number <= failures_required + 1:
-                if number > 1 and not any("Babysitter detected" in str(m.get("content")) and "rolled back" in str(m.get("content")) for m in body["messages"]):
+                if number > 1 and not any("Aletheia detected" in str(m.get("content")) and "rolled back" in str(m.get("content")) for m in body["messages"]):
                     self.send_json({"error": "Fixture requires actual failure and rollback feedback"}, 500)
                     return
                 content = (bad + ("\n" if number > 1 else "")) if number <= failures_required else good
@@ -143,29 +143,29 @@ async def run_demo(root: Path, filename: str, bad: str, good: str, *, fail_twice
     started = time.monotonic()
     try:
         async with runtime_client(root, config, over_http) as (client, store):
-            response = await client.post("/v1/chat/completions", json={"model": "babysitter", "messages": [
+            response = await client.post("/v1/chat/completions", json={"model": "aletheia", "messages": [
                 {"role": "user", "content": f"Apply the proposed change to {filename}. Recover from failed checks and finish only with passing evidence."}]},
-                headers={"X-Babysitter-Execute": "true"})
+                headers={"X-Aletheia-Execute": "true"})
             if response.status_code != 200:
                 raise RuntimeError(f"Demo failed: {response.status_code} {response.text}")
-            task_id = response.headers["X-Babysitter-Task"]
+            task_id = response.headers["X-Aletheia-Task"]
             trace = store.trace(task_id)
-            (root / ".babysitter" / f"demo-{task_id}.json").write_text(json.dumps(trace, indent=2))
+            (root / ".aletheia" / f"demo-{task_id}.json").write_text(json.dumps(trace, indent=2))
             verifications = [event["payload"] for event in trace["events"] if event["kind"] == "verification.result"]
             assert [v["status"] for v in verifications] == ["failed"] * failures_required + ["passed", "passed"]
             assert (root / filename).read_text() == good
-            assert response.headers["X-Babysitter-State"] == "verified_complete"
+            assert response.headers["X-Aletheia-State"] == "verified_complete"
             model_sequence = [request["model"] for request in requests]
             assert model_sequence == (["fixture-weak", "fixture-weak", "fixture-strong", "fixture-weak"] if fail_twice else ["fixture-weak"] * 3)
             report = {"fixture_provider": True, "real_model_quality_evaluated": False, "human_interventions": 0,
                       "transport": "CLI server over TCP + real HTTP upstream" if over_http else "in-process ASGI runtime + real HTTP upstream", "project": root.name,
                       "git_revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
-                      "task_id": task_id, "state": response.headers["X-Babysitter-State"], "model_sequence": model_sequence,
+                      "task_id": task_id, "state": response.headers["X-Aletheia-State"], "model_sequence": model_sequence,
                       "elapsed_seconds": round(time.monotonic() - started, 3), "metrics": metrics(trace),
                       "verification": [{"status": v["status"], "files": v["files"], "fingerprint": v["fingerprint"],
                          "commands": [{"name": c["name"], "argv": c["argv"], "exit_code": c["exit_code"],
                                        "output_tail": (c["stdout"] + c["stderr"])[-1500:]} for c in v["commands"]]} for v in verifications],
-                      "checkpoint_count": len(trace["checkpoints"]), "trace_file": str(root / ".babysitter" / f"demo-{task_id}.json")}
+                      "checkpoint_count": len(trace["checkpoints"]), "trace_file": str(root / ".aletheia" / f"demo-{task_id}.json")}
             return report
     finally:
         upstream.shutdown()
@@ -175,13 +175,13 @@ async def run_demo(root: Path, filename: str, bad: str, good: str, *, fail_twice
 
 def create_fixture(root: Path):
     root.mkdir(parents=True)
-    (root / ".gitignore").write_text(".babysitter/\n__pycache__/\n.pytest_cache/\n.mypy_cache/\n")
+    (root / ".gitignore").write_text(".aletheia/\n__pycache__/\n.pytest_cache/\n.mypy_cache/\n")
     (root / "calc.py").write_text("def add(a: int, b: int) -> int:\n    return a + b\n")
     (root / "test_calc.py").write_text("from calc import add\n\ndef test_add():\n    assert add(2, 3) == 5\n")
     (root / "pyproject.toml").write_text('[tool.mypy]\nfiles = ["calc.py"]\nstrict = true\n')
     subprocess.run(["git", "init", "-q", str(root)], check=True)
     subprocess.run(["git", "add", "."], cwd=root, check=True)
-    subprocess.run(["git", "-c", "user.name=Babysitter Demo", "-c", "user.email=demo@localhost", "commit", "-qm", "demo baseline"], cwd=root, check=True)
+    subprocess.run(["git", "-c", "user.name=Aletheia Demo", "-c", "user.email=demo@localhost", "commit", "-qm", "demo baseline"], cwd=root, check=True)
 
 
 def main():
@@ -190,7 +190,7 @@ def main():
     parser.add_argument("--http", action="store_true", help="start the real CLI server and exercise both sides over TCP")
     parser.add_argument("--fail-twice", action="store_true", help="exercise step-only stronger-model escalation")
     args = parser.parse_args()
-    root = Path.cwd() / ".babysitter" / ("demo-" + uid()[:8])
+    root = Path.cwd() / ".aletheia" / ("demo-" + uid()[:8])
     create_fixture(root)
     report = asyncio.run(run_demo(root, "calc.py", "def add(a: int, b: int) -> int:\n    return a - b\n",
                                  "def add(a: int, b: int) -> int:\n    # Return the sum, not the difference.\n    return a + b\n", fail_twice=args.fail_twice, over_http=args.http))

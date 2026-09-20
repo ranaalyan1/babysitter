@@ -16,7 +16,7 @@ GUIDES = {
 
 
 def main():
-    destination = ROOT / "babysitter" / "web" / "guides"
+    destination = ROOT / "aletheia" / "web" / "guides"
     destination.mkdir(exist_ok=True)
     for slug, (_, source) in GUIDES.items():
         (destination / (slug + ".md")).write_text((ROOT / source).read_text())

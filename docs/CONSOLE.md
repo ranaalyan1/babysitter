@@ -1,13 +1,13 @@
 # Your agents, with a safety net
 
-The Babysitter console is a read-only view of local supervision evidence. It is
+The Aletheia console is a read-only view of local supervision evidence. It is
 not an agent launcher, cloud account, model router or execution API.
 
 ## Open the console
 
 ```sh
-babysitter ui
-babysitter --root /path/to/project ui
+aletheia ui
+aletheia --root /path/to/project ui
 ```
 
 Open http://127.0.0.1:8040. No database is a valid empty workspace: the console
@@ -15,7 +15,7 @@ will explain how to configure an agent instead of inventing activity. It does
 not create a database, run migrations, or take the supervisor's project lock.
 
 ```sh
-babysitter ui --demo
+aletheia ui --demo
 ```
 
 Demo mode serves synthetic, clearly labeled fixtures. It never reads your project
@@ -37,7 +37,7 @@ command output must not be represented as actual verification or model quality.
 - **Agent integrations:** get copyable setup commands. They are instructions,
   not browser-triggered execution; review native permissions and hook trust.
 - **Workspace:** see the configured test/typecheck commands. Density and automatic
-  refresh preferences affect this browser only, not `babysitter.json`.
+  refresh preferences affect this browser only, not `aletheia.json`.
 
 Use Cmd/Ctrl+K or `/` to search pages and tasks. Escape dismisses dialogs. Dialog
 focus is contained, controls are keyboard accessible, navigation adapts to narrow
@@ -48,16 +48,16 @@ screens, and animations honor reduced-motion preferences.
 First configure real checks in your project:
 
 ```sh
-babysitter init --test 'python -m pytest -q' --typecheck 'python -m mypy src'
-babysitter doctor --offline
+aletheia init --test 'python -m pytest -q' --typecheck 'python -m mypy src'
+aletheia doctor --offline
 ```
 
 Use commands meaningful for the actual project, not placeholders such as `true`.
 Install the native agent separately through its official mechanism.
 
-- Claude Code: `babysitter claude install`; inspect native `/hooks`.
-- Codex: `babysitter codex install`; trust the project and exact native hooks.
-- OpenCode: `babysitter opencode run 'Fix the failing tests'`.
+- Claude Code: `aletheia claude install`; inspect native `/hooks`.
+- Codex: `aletheia codex install`; trust the project and exact native hooks.
+- OpenCode: `aletheia opencode run 'Fix the failing tests'`.
 
 The read-only console can coexist with any one of these. Do not run multiple
 supervisors or agents in the same worktree.
@@ -65,10 +65,10 @@ supervisors or agents in the same worktree.
 ## Private remote access
 
 The default bind is loopback. For an explicitly authorized private remote console,
-set `BABYSITTER_UI_TOKEN` in the host environment, then:
+set `ALETHEIA_UI_TOKEN` in the host environment, then:
 
 ```sh
-babysitter ui --host 0.0.0.0 --port 8040
+aletheia ui --host 0.0.0.0 --port 8040
 ```
 
 Enter that console token in the browser's unlock dialog. It is sent in a Bearer
@@ -92,11 +92,11 @@ Cross-origin API requests are rejected; no wildcard CORS is enabled.
 - Statistics cover all tasks/checkpoints in the database. The newest 100 tasks
   are listed; the interface labels truncation when more exist.
 - A task view loads up to 5,000 events within a 4 MB payload budget. Exports contain
-  only loaded events. Use `babysitter trace TASK_ID` for the complete CLI trace.
+  only loaded events. Use `aletheia trace TASK_ID` for the complete CLI trace.
 - A manifest is limited to 2 MB and 1,000 displayed file entries. File previews
   are at most 64 KB; binary content is not rendered as text.
 - Inspection only reads canonical retained artifacts below
-  `.babysitter/checkpoints`. Arbitrary filesystem paths and symlinked artifacts
+  `.aletheia/checkpoints`. Arbitrary filesystem paths and symlinked artifacts
   are not served, even if a database manifest path points elsewhere.
 - Known credential patterns are redacted, but heuristic redaction cannot detect
   every secret. Treat traces, previews, exports and screenshots as sensitive.

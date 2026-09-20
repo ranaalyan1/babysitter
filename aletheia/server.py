@@ -24,7 +24,7 @@ def create_app(root: Path | str = ".", config: Config | None = None, provider=No
     root = Path(root).resolve()
     config = config or Config.load(root)
     config.validate()
-    store = Store(root / ".babysitter")
+    store = Store(root / ".aletheia")
     project = Project(root, store, config.max_snapshot_bytes)
     upstream = provider or OpenAIProvider(config)
     runtime = Runtime(project, store, config, upstream)
@@ -32,11 +32,11 @@ def create_app(root: Path | str = ".", config: Config | None = None, provider=No
 
     @asynccontextmanager
     async def lifespan(app):
-        with (root / ".babysitter" / "runtime.lock").open("a") as lock:
+        with (root / ".aletheia" / "runtime.lock").open("a") as lock:
             try:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
-                raise RuntimeError("A Babysitter runtime already owns this project")
+                raise RuntimeError("A Aletheia runtime already owns this project")
             try:
                 # An interrupted managed turn is not a success and must not own the
                 # project forever. Retain all bytes for operator inspection, never
@@ -57,7 +57,7 @@ def create_app(root: Path | str = ".", config: Config | None = None, provider=No
                 store.close()
                 fcntl.flock(lock, fcntl.LOCK_UN)
 
-    app = FastAPI(title="Babysitter Runtime", version=__version__, lifespan=lifespan, docs_url=None, redoc_url=None)
+    app = FastAPI(title="Aletheia Runtime", version=__version__, lifespan=lifespan, docs_url=None, redoc_url=None)
     app.state.runtime = runtime
 
     @app.middleware("http")
@@ -69,18 +69,18 @@ def create_app(root: Path | str = ".", config: Config | None = None, provider=No
             if not hmac.compare_digest(supplied.encode(), token.encode()):
                 return JSONResponse({"error": {"type": "authentication_error", "message": "Local runtime token required"}}, status_code=401)
         elif request.url.hostname not in {"localhost", "127.0.0.1", "::1"}:
-            return JSONResponse({"error": {"type": "permission_error", "message": "Non-loopback hosts require BABYSITTER_LOCAL_TOKEN"}}, status_code=403)
+            return JSONResponse({"error": {"type": "permission_error", "message": "Non-loopback hosts require ALETHEIA_LOCAL_TOKEN"}}, status_code=403)
         if request.headers.get("origin"):
             return JSONResponse({"error": {"type": "permission_error", "message": "Browser-origin requests are not supported in v0.1"}}, status_code=403)
         return await call_next(request)
 
     @app.exception_handler(SupervisionError)
     async def supervision_error(request, exc):
-        headers = {"X-Babysitter-Verified": "false"}
+        headers = {"X-Aletheia-Verified": "false"}
         if exc.task_id:
-            headers["X-Babysitter-Task"] = exc.task_id
+            headers["X-Aletheia-Task"] = exc.task_id
             try:
-                headers["X-Babysitter-State"] = store.task(exc.task_id)["state"]
+                headers["X-Aletheia-State"] = store.task(exc.task_id)["state"]
             except KeyError:
                 # Unknown tasks are valid 404 errors, not failures of the handler.
                 pass
@@ -111,19 +111,19 @@ def create_app(root: Path | str = ".", config: Config | None = None, provider=No
         if not isinstance(body, dict):
             raise SupervisionError("Request must be a JSON object")
         messages, tools, options = normalize(body, protocol)
-        if body["model"] not in {config.model, "babysitter"}:
-            raise SupervisionError("Use model 'babysitter' or the configured base model; stronger model selection belongs to the escalation rule")
-        managed_value = request.headers.get("X-Babysitter-Execute", "false")
+        if body["model"] not in {config.model, "aletheia"}:
+            raise SupervisionError("Use model 'aletheia' or the configured base model; stronger model selection belongs to the escalation rule")
+        managed_value = request.headers.get("X-Aletheia-Execute", "false")
         if managed_value not in {"true", "false"}:
-            raise SupervisionError("X-Babysitter-Execute must be true or false")
+            raise SupervisionError("X-Aletheia-Execute must be true or false")
         result, task = await runtime.run(messages, tools, options, protocol=protocol, managed=managed_value == "true",
-                                         task_id=request.headers.get("X-Babysitter-Task"), session_id=request.headers.get("X-Babysitter-Session"))
-        headers = {"X-Babysitter-Task": task["id"], "X-Babysitter-Session": task["session_id"], "X-Babysitter-State": task["state"],
-                   "X-Babysitter-Verified": "true" if task["state"] == "verified_complete" else "false"}
+                                         task_id=request.headers.get("X-Aletheia-Task"), session_id=request.headers.get("X-Aletheia-Session"))
+        headers = {"X-Aletheia-Task": task["id"], "X-Aletheia-Session": task["session_id"], "X-Aletheia-State": task["state"],
+                   "X-Aletheia-Verified": "true" if task["state"] == "verified_complete" else "false"}
         if body.get("stream"):
             stream_options = body.get("stream_options") or {}
             return StreamingResponse(stream_events(result, protocol, isinstance(stream_options, dict) and bool(stream_options.get("include_usage"))),
-                                     media_type="text/event-stream", headers={**headers, "X-Babysitter-Stream": "buffered-until-validated", "Cache-Control": "no-cache"})
+                                     media_type="text/event-stream", headers={**headers, "X-Aletheia-Stream": "buffered-until-validated", "Cache-Control": "no-cache"})
         return JSONResponse(anthropic_response(result) if protocol == "anthropic" else result, headers=headers)
 
     @app.post("/v1/chat/completions")

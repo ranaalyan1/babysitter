@@ -12,12 +12,12 @@ from ..config import Config
 from .claude_install import _save, hook_timeout, owned, read_settings, strip_owned
 
 EVENTS = ("SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop", "SessionEnd", "Interrupt")
-MARKER = "# babysitter:codex-hooks:v1"
+MARKER = "# aletheia:codex-hooks:v1"
 
 
 def settings_path(root: Path) -> Path:
     path = root / ".codex" / "hooks.json"
-    for candidate in (root / ".babysitter", path.parent, path, root / ".codex" / "config.toml"):
+    for candidate in (root / ".aletheia", path.parent, path, root / ".codex" / "config.toml"):
         if candidate.is_symlink():
             raise ValueError(f"Refusing symlinked integration path: {candidate}")
     return path
@@ -33,16 +33,16 @@ def disabled(root: Path) -> bool:
 
 
 def command(root: Path, event: str) -> str:
-    argv = [str(Path(sys.executable).absolute()), "-m", "babysitter.adapters.codex", "--root", str(root), "--event", event]
+    argv = [str(Path(sys.executable).absolute()), "-m", "aletheia.adapters.codex", "--root", str(root), "--event", event]
     return (shlex.join(argv) + "; status=$?; if [ \"$status\" -ne 0 ]; then "
-            "printf '%s\\n' 'Babysitter hook failed. Task is NOT VERIFIED. Inspect installation and trace.' >&2; exit 2; fi; " + MARKER)
+            "printf '%s\\n' 'Aletheia hook failed. Task is NOT VERIFIED. Inspect installation and trace.' >&2; exit 2; fi; " + MARKER)
 
 
 def install(root: Path) -> dict:
     root = root.resolve()
     path = settings_path(root)
-    if not (root / "babysitter.json").is_file():
-        raise ValueError("Run babysitter init with --test and --typecheck before installing Codex hooks")
+    if not (root / "aletheia.json").is_file():
+        raise ValueError("Run aletheia init with --test and --typecheck before installing Codex hooks")
     config = Config.load(root)
     if not config.test_command or not config.typecheck_command:
         raise ValueError("Both test_command and typecheck_command are required")
@@ -76,7 +76,7 @@ def uninstall(root: Path) -> dict:
     before = read_settings(path)
     after = strip_owned(before, MARKER)
     return {"installed": False, "changed": before != after, "backup": _save(root, path, before, after),
-            "retained": "Unrelated hooks, Codex config/trust/credentials, and all Babysitter evidence"}
+            "retained": "Unrelated hooks, Codex config/trust/credentials, and all Aletheia evidence"}
 
 
 def status(root: Path) -> dict:
@@ -84,7 +84,7 @@ def status(root: Path) -> dict:
     settings = read_settings(settings_path(root))
     config = Config.load(root)
     problems = []
-    if not (root / "babysitter.json").is_file() or not config.test_command or not config.typecheck_command:
+    if not (root / "aletheia.json").is_file() or not config.test_command or not config.typecheck_command:
         problems.append("Initialize both verification commands first")
     if disabled(root):
         problems.append("Project config has hooks disabled")

@@ -3,7 +3,7 @@
   "agent_version": "codex-cli 0.155.1",
   "real_model_tested": false,
   "exit_code": 0,
-  "root": "/home/user/test0/.babysitter/codex-demo-7600fd98",
+  "root": "/home/user/test0/.aletheia/codex-demo-7600fd98",
   "model_requests": 4,
   "verification_statuses": [
     "failed",

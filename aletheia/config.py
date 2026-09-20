@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 @dataclass
 class Config:
     provider_url: str = "http://127.0.0.1:11434/v1"
-    api_key_env: str = "BABYSITTER_PROVIDER_API_KEY"
+    api_key_env: str = "ALETHEIA_PROVIDER_API_KEY"
     model: str = "qwen2.5-coder:7b"
     stronger_model: str | None = None
     test_command: list[str] = field(default_factory=list)
@@ -24,15 +24,15 @@ class Config:
     allow_managed_tools: bool = False
     max_snapshot_bytes: int = 25_000_000
     max_output_bytes: int = 64_000
-    token_env: str = "BABYSITTER_LOCAL_TOKEN"
+    token_env: str = "ALETHEIA_LOCAL_TOKEN"
 
     @classmethod
     def load(cls, root: Path) -> Config:
-        path = root / "babysitter.json"
+        path = root / "aletheia.json"
         if path.exists():
             data = json.loads(path.read_text())
             if not isinstance(data, dict):
-                raise ValueError("babysitter.json must contain a JSON object")
+                raise ValueError("aletheia.json must contain a JSON object")
             unknown = data.keys() - cls.__dataclass_fields__.keys()
             if unknown:
                 raise ValueError("Unknown configuration fields: " + ", ".join(sorted(unknown)))
@@ -74,4 +74,4 @@ class Config:
 
     def save(self, root: Path) -> None:
         self.validate()
-        (root / "babysitter.json").write_text(json.dumps(asdict(self), indent=2) + "\n")
+        (root / "aletheia.json").write_text(json.dumps(asdict(self), indent=2) + "\n")

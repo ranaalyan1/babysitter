@@ -22,9 +22,9 @@ from .state import redact
 WEB = Path(__file__).with_name("web")
 LOCAL = {"localhost", "127.0.0.1", "::1"}
 AGENTS = [
-    {"id": "claude-code", "name": "Claude Code", "kind": "Native hooks", "description": "Observe native tools. Verify before completion. Recover with context.", "command": "babysitter claude install\nbabysitter claude status\nclaude", "note": "Review the installed commands in Claude Code /hooks before starting a fresh session."},
-    {"id": "codex", "name": "Codex", "kind": "Native hooks", "description": "Guard patch paths and keep recovery in the same supervised task.", "command": "babysitter codex install\nbabysitter codex status\ncodex", "note": "Trust the project and review/trust the exact hook definitions in Codex /hooks. Permissions stay native."},
-    {"id": "opencode", "name": "OpenCode", "kind": "Owned CLI process", "description": "Verify after the process exits. Retry in the same native session.", "command": "babysitter opencode status\nbabysitter opencode run 'Fix the failing tests'", "note": "Use this wrapper, not the normal TUI. No pre-tool interception, auto-approval, or plugin installation."},
+    {"id": "claude-code", "name": "Claude Code", "kind": "Native hooks", "description": "Observe native tools. Verify before completion. Recover with context.", "command": "aletheia claude install\naletheia claude status\nclaude", "note": "Review the installed commands in Claude Code /hooks before starting a fresh session."},
+    {"id": "codex", "name": "Codex", "kind": "Native hooks", "description": "Guard patch paths and keep recovery in the same supervised task.", "command": "aletheia codex install\naletheia codex status\ncodex", "note": "Trust the project and review/trust the exact hook definitions in Codex /hooks. Permissions stay native."},
+    {"id": "opencode", "name": "OpenCode", "kind": "Owned CLI process", "description": "Verify after the process exits. Retry in the same native session.", "command": "aletheia opencode status\naletheia opencode run 'Fix the failing tests'", "note": "Use this wrapper, not the normal TUI. No pre-tool interception, auto-approval, or plugin installation."},
 ]
 
 
@@ -42,7 +42,7 @@ def clean(value):
 
 @contextmanager
 def reader(root: Path):
-    directory = root / ".babysitter"
+    directory = root / ".aletheia"
     path = directory / "state.sqlite3"
     if directory.is_symlink() or path.is_symlink():
         raise HTTPException(409, "Symlinked runtime state is not served")
@@ -118,7 +118,7 @@ def workspace(root: Path) -> dict:
                 event = dict(row)
                 event["payload"] = json.loads(event.pop("payload_json"))
                 activity.append(event)
-    config_path = root / "babysitter.json"
+    config_path = root / "aletheia.json"
     if config_path.is_symlink():
         raise HTTPException(409, "Symlinked configuration is not served")
     try:
@@ -128,7 +128,7 @@ def workspace(root: Path) -> dict:
         commands = {"test": config.test_command, "typecheck": config.typecheck_command}
         config_error = None
     except (ValueError, OSError):
-        commands, config_error = {}, "Configuration could not be read; use babysitter doctor --offline"
+        commands, config_error = {}, "Configuration could not be read; use aletheia doctor --offline"
     return clean({"mode": "local", "version": __version__, "project": root.name, "root": str(root),
                   "stats": counts, "tasks": tasks, "tasks_truncated": counts["total"] > len(tasks), "activity": activity,
                   "config": {"initialized": config_path.is_file(), "commands": commands, "error": config_error},
@@ -152,9 +152,9 @@ def detail(root: Path, task_id: str) -> dict:
 
 
 def retained_path(root: Path, relative: str) -> Path:
-    directory = root / ".babysitter" / "checkpoints"
+    directory = root / ".aletheia" / "checkpoints"
     path = directory / relative
-    for candidate in (root / ".babysitter", directory, *path.relative_to(directory).parents):
+    for candidate in (root / ".aletheia", directory, *path.relative_to(directory).parents):
         candidate = candidate if candidate.is_absolute() else directory / candidate
         if candidate.is_symlink():
             raise HTTPException(409, "Symlinked evidence is not served")
@@ -198,8 +198,8 @@ def checkpoint(root: Path, task_id: str, checkpoint_id: str, filename: str | Non
 
 def create_console(root: Path | str = ".", *, demo: bool = False, token: str | None = None) -> FastAPI:
     root = Path(root).resolve()
-    token = token if token is not None else os.environ.get("BABYSITTER_UI_TOKEN")
-    app = FastAPI(title="Babysitter local console", version=__version__, docs_url=None, redoc_url=None, openapi_url=None)
+    token = token if token is not None else os.environ.get("ALETHEIA_UI_TOKEN")
+    app = FastAPI(title="Aletheia local console", version=__version__, docs_url=None, redoc_url=None, openapi_url=None)
     demo_state = None
     if demo:
         from .console_demo import create_demo
@@ -216,7 +216,7 @@ def create_console(root: Path | str = ".", *, demo: bool = False, token: str | N
                 if token and not hmac.compare_digest(supplied.encode(), token.encode()):
                     return JSONResponse({"detail": "Local console token required"}, status_code=401)
                 if not token and request.url.hostname not in LOCAL:
-                    return JSONResponse({"detail": "Non-loopback access requires BABYSITTER_UI_TOKEN"}, status_code=403)
+                    return JSONResponse({"detail": "Non-loopback access requires ALETHEIA_UI_TOKEN"}, status_code=403)
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store" if request.url.path.startswith("/api/") else "no-cache"
         response.headers["X-Content-Type-Options"] = "nosniff"

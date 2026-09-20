@@ -4,10 +4,10 @@ import time
 
 import pytest
 
-from babysitter.adapters.codex import CodexAdapter, hook_main, teardown
-from babysitter.adapters.codex_install import install, status, uninstall, EVENTS
-from babysitter.adapters.claude import ClaudeAdapter
-from babysitter.metrics import metrics
+from aletheia.adapters.codex import CodexAdapter, hook_main, teardown
+from aletheia.adapters.codex_install import install, status, uninstall, EVENTS
+from aletheia.adapters.claude import ClaudeAdapter
+from aletheia.metrics import metrics
 from test_claude_adapter import event, start, BAD, GOOD
 
 
@@ -53,7 +53,7 @@ async def test_genuine_new_prompt_supersedes_but_never_rolls_back_user_work(adap
     assert adapter.session('native-session')['task_id'] != old
 
 
-@pytest.mark.parametrize('path', ['/etc/passwd', '../escape', '.git/config', '.babysitter/state.sqlite3', '.codex/hooks.json', '.opencode/plugin.js', '.env', 'babysitter.json'])
+@pytest.mark.parametrize('path', ['/etc/passwd', '../escape', '.git/config', '.aletheia/state.sqlite3', '.codex/hooks.json', '.opencode/plugin.js', '.env', 'aletheia.json'])
 @pytest.mark.parametrize('operation', ['Add File', 'Update File', 'Delete File', 'Move to'])
 async def test_all_patch_headers_guard_paths(adapter, path, operation):
     await start(adapter)
@@ -158,7 +158,7 @@ async def test_running_shell_result_is_not_quiescent(adapter):
 
 
 async def test_proxy_cannot_take_codex_ownership(adapter):
-    from babysitter.server import create_app
+    from aletheia.server import create_app
     from conftest import ScriptedProvider, answer
     await start(adapter)
     app = create_app(adapter.project.root, adapter.config, ScriptedProvider([answer()]))
@@ -189,7 +189,7 @@ def test_installed_matcher_tampering_is_reported(adapter):
 
 
 async def test_unknown_running_result_does_not_create_false_quiescence(adapter):
-    from babysitter.adapters.native import HookError
+    from aletheia.adapters.native import HookError
     await start(adapter)
     with pytest.raises(HookError, match='matching pending'):
         await adapter.handle(event(adapter, 'PostToolUse', tool_name='Bash', tool_use_id='unseen', tool_input={'command':'sleep 5'}, tool_response={'running':True}))
