@@ -1,99 +1,113 @@
 <p align="center">
-  <img src="docs/brand/readme-banner.svg" alt="Aletheia. Your agents build. We check the work." width="100%">
+  <a href="docs/BRAND.md">
+    <img src="docs/brand/logo.png" alt="Aletheia logo — an open A with a mint verification check on a violet tile" width="144" height="144">
+  </a>
+</p>
+
+<h1 align="center">Aletheia</h1>
+
+<p align="center"><strong>Local supervision. Visible evidence. Verified progress.</strong></p>
+
+<p align="center">
+  <img src="docs/brand/readme-banner.svg" alt="Aletheia — Less blind trust. More proof. Local supervision for AI coding agents." width="100%">
 </p>
 
 <p align="center">
-  <strong>A local supervision runtime for AI coding agents.</strong><br>
-  Models generate actions. Agents coordinate actions. Aletheia makes sure those actions actually work.
+  <strong>The agent says “done.” Let the evidence speak.</strong><br>
+  A local supervision runtime that checks AI-generated work, preserves failed changes,<br>
+  and gives supported coding agents a bounded path to recovery.
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-7654D0.svg" alt="License: Apache 2.0"></a>
-  <a href="https://pypi.org/project/aletheia-runtime/"><img src="https://img.shields.io/badge/pypi-aletheia--runtime-282730.svg" alt="pypi: aletheia-runtime"></a>
-  <a href="#quick-start"><img src="https://img.shields.io/badge/Python-3.11%2B-476F54.svg" alt="Python 3.11+"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-8871F6?style=flat-square" alt="License: Apache 2.0"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.11%2B-8871F6?style=flat-square" alt="Python 3.11 or newer"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.0.0-8871F6?style=flat-square" alt="Project version 1.0.0"></a>
+  <a href="docs/CONSOLE.md"><img src="https://img.shields.io/badge/console-local_%26_read--only-476F54?style=flat-square" alt="Local, read-only console"></a>
 </p>
 
 <p align="center">
   <a href="#quick-start">Quick start</a> ·
-  <a href="#the-local-console">Console</a> ·
-  <a href="#choose-your-integration">Integrations</a> ·
-  <a href="docs/VALIDATION.md">Evidence</a> ·
-  <a href="docs/CONSOLE.md">Documentation</a>
+  <a href="#a-window-into-the-work">Console</a> ·
+  <a href="#bring-your-agent">Integrations</a> ·
+  <a href="#proof-without-the-hype">Validation</a> ·
+  <a href="#go-deeper">Documentation</a>
 </p>
 
 ---
 
-## “Done” should mean checked.
+## Fast is good. Verified is better.
 
-Coding agents move quickly. Sometimes they also skip a failing test, repeat a bad
-edit, or announce success before the work is ready.
+An agent can write a convincing explanation of a change that still breaks your tests. It can repeat an unsuccessful edit. It can declare victory before the work is ready.
 
-**Aletheia adds an evidence requirement around the agent you already use.** It
-observes supported actions, validates what it can, independently runs your checks,
-and gives failures a bounded path to recovery. Unsuccessful changes are retained
-before rollback. A model's confidence never substitutes for verification.
+**Aletheia puts independent checks between a claim of completion and a verified result.** It works around supported agents and protocol workflows—not as another coding assistant, but as a supervision layer for the one you already use.
 
-```text
-Observe → Validate → Repair → Execute → Verify → Recover → Escalate
-```
+You define the checks. Your agent does the work. Aletheia records the evidence, retains unsuccessful changes within checkpoint scope, and manages bounded recovery when supported.
 
-Local-first. No cloud account. No auth scraping. No invented time-savings claims.
+> **Confidence is a model output. Verification is a process.**
 
-## The local console
+<table>
+  <tr>
+    <td width="50%"><strong>Check the work, not the wording.</strong><br>Run configured tests, type checks, and Git diff checks independently of the agent's completion claim.</td>
+    <td width="50%"><strong>Keep failures inspectable.</strong><br>Retain unsuccessful file contents in content-addressed checkpoints before safe rollback.</td>
+  </tr>
+  <tr>
+    <td><strong>Retry with a limit.</strong><br>Return actionable failure context within a bounded recovery budget, rather than looping indefinitely.</td>
+    <td><strong>Read the evidence locally.</strong><br>Explore task histories, command output, and checkpoint previews in a separate read-only console.</td>
+  </tr>
+</table>
+
+**Local-first supervision. No cloud account required for Aletheia. No credential scraping.** Your chosen agent or model provider may still require its own account and network access.
+
+## A window into the work
 
 <p align="center">
-  <img src="docs/brand/console-desktop.png" alt="Aletheia's local console: task states, verification evidence, checkpoint counts, and the supervision loop. Screenshot shows labeled synthetic demo data." width="100%">
+  <img src="docs/brand/console-desktop.png" alt="Actual Aletheia console capture showing clearly labeled synthetic demo tasks, verification evidence, and checkpoints." width="100%">
 </p>
 
-**New in v1.0:** released under the Apache License 2.0 as **Aletheia**, with a
-complete visual identity and a read-only interface for the runtime.
+<p align="center"><sub>Actual console capture with synthetic demo data—not a real-model performance result. The capture predates the refreshed monogram.</sub></p>
 
-- **Overview** — recorded task states, failed verification rounds, checkpoints, and recent activity.
-- **Tasks** — search, status filters, event timelines, and loaded-trace JSON export.
-- **Verification** — independent command output, exit codes, timing, and failures.
-- **Checkpoints** — inspect retained manifests and file previews without restoring anything.
-- **Agent integrations** — copyable setup instructions, with capability limits made explicit.
-- **Workspace** — local configuration and browser-only display preferences.
+One place to understand what happened—without giving the browser control over your agent.
 
-```sh
-aletheia ui          # Read evidence in the current repository
-aletheia ui --demo   # Explore clearly labeled synthetic data; reads no project state
-```
-
-Open **http://127.0.0.1:8040**. To inspect a different repository:
+| View | What you can inspect |
+| :--- | :--- |
+| **Overview** | Recorded task states, failed verification rounds, checkpoints, and recent activity |
+| **Tasks** | Searchable histories, status filters, event timelines, and loaded-trace JSON export |
+| **Verification** | Independent command output, exit codes, timing, and failures |
+| **Checkpoints** | Retained manifests and file previews, without restoring files |
+| **Integrations & workspace** | Setup instructions, capability boundaries, local configuration, and browser-only preferences |
 
 ```sh
-aletheia --root /path/to/project ui
+aletheia ui          # Inspect the current repository
+aletheia ui --demo   # Explore synthetic data without reading project state
 ```
 
-The console never launches agents, executes tests, grants permissions, restores
-files, or changes task states. It can run beside a native agent without taking
-the project's supervisor lock. Its synthetic demo is **not** evidence of real
-model performance. [Console setup and security →](docs/CONSOLE.md)
+Open **http://127.0.0.1:8040**. To inspect another repository, use `aletheia --root /path/to/project ui`.
+
+The console does **not** launch agents, execute tests, grant permissions, restore files, or change task states. It can run beside a native agent without taking the supervisor lock. [Console guide →](docs/CONSOLE.md)
 
 ## Quick start
 
-**Requirements:** Python 3.11+, Git, and Linux/macOS. Your target project must be a
-git repository with at least one commit. Use a dedicated worktree and meaningful
-project-specific tests.
+### 01 · Install the runtime
 
-### 1. Install from this checkout
+You need **Python 3.11+, Git, and Linux/macOS**. The repository you supervise must have at least one commit. Use a dedicated worktree and meaningful project-specific tests.
 
 ```sh
+git clone https://github.com/ranaalyan1/aletheia.git
+cd aletheia
 python -m venv .venv
 . .venv/bin/activate
 pip install -e '.[dev]'
 ```
 
-This installs Aletheia, not an AI model or a native coding agent. Install and
-authenticate Claude Code, Codex, or OpenCode through their official instructions.
-No published package availability is implied by the project name.
+Already have this checkout? Start at `python -m venv .venv`. This installs Aletheia—not a model or coding agent. Install and authenticate your preferred agent through its official instructions. These instructions do not assume a published PyPI package.
 
-### 2. Configure the target repository
+### 02 · Define what “checked” means
 
-With `aletheia` on your PATH, run this in the repository you want supervised:
+With the virtual environment still active, move to the repository you want supervised:
 
 ```sh
+cd /path/to/your/project
+
 aletheia init \
   --test 'python -m pytest -q' \
   --typecheck 'python -m mypy src'
@@ -101,46 +115,43 @@ aletheia init \
 aletheia doctor --offline
 ```
 
-Replace these example commands with checks that cover **your** project. Commands
-are argv arrays, not shell scripts. Use absolute interpreter paths if needed.
-`init` creates `aletheia.json` and excludes `.aletheia/` and `.env` from Git;
-it will not overwrite an existing configuration.
+Replace the sample checks with commands appropriate to **your project**, and ensure their tools are installed in the intended environment. Commands are argv arrays, not shell scripts; use absolute interpreter paths where needed.
 
-### 3. Choose one integration
+`init` creates `aletheia.json`, excludes `.aletheia/` and `.env` from Git, and will not overwrite an existing configuration.
 
-#### Claude Code
+### 03 · Connect your agent
+
+Choose **one** integration for the worktree.
+
+**Claude Code · project-local hooks**
 
 ```sh
 aletheia claude install
 aletheia claude status
 claude
-# Review the installed commands in /hooks, then start supervised work.
 ```
 
-[Claude Code guide →](docs/CLAUDE_CODE.md)
+Review the installed commands in `/hooks` before supervised work. [Claude Code setup →](docs/CLAUDE_CODE.md)
 
-#### Codex
+**Codex · project-local hooks with native trust**
 
 ```sh
 aletheia codex install
 aletheia codex status
 codex
-# Trust the project and review/trust the exact installed definitions in /hooks.
 ```
 
-The installer does not bypass hook trust or change sandbox/permission settings.
-[Codex guide →](docs/CODEX.md)
+Trust the project and review/trust the exact installed definitions in `/hooks`. The installer does not bypass hook trust or change sandbox and permission settings. [Codex setup →](docs/CODEX.md)
 
-#### OpenCode
+**OpenCode · owned CLI wrapper**
 
 ```sh
 aletheia opencode run 'Fix the failing tests'
 ```
 
-Use this owned CLI wrapper—not a normal OpenCode TUI session. Only wrapper exit 0
-with `"verified": true` is successful supervision. [OpenCode guide →](docs/OPENCODE.md)
+Use this wrapper, not a normal OpenCode TUI session. Successful supervision requires **wrapper exit code 0 and `"verified": true`**. [OpenCode setup →](docs/OPENCODE.md)
 
-### 4. See what actually happened
+### 04 · Inspect the outcome
 
 ```sh
 aletheia ui
@@ -150,77 +161,71 @@ aletheia trace TASK_ID --metrics
 aletheia trace TASK_ID --checkpoint CHECKPOINT_ID
 ```
 
-## Choose your integration
+Replace the uppercase placeholders with IDs from your recorded tasks and checkpoints.
 
-These are different contracts, not blanket agent compatibility.
+## Bring your agent
 
-| Integration | What Aletheia sees | Completion / recovery | Setup |
-| --- | --- | --- | --- |
-| **Claude Code** | Supported native command hooks | Stop checks, retained failures, bounded continuation | Project-local hooks |
-| **Codex** | Supported hooks, Bash inputs and patch paths | Stop checks; same task/checkpoint/budget across recovery | Project-local hooks; native trust required |
-| **OpenCode** | Emitted JSONL from an owned CLI process | Checks after clean process exit; same-session retry | Wrapper, no plugin |
-| **Protocol runtime** | OpenAI-compatible / Anthropic-compatible protocol traffic and independent filesystem checks | Managed-tool or relay lifecycle, step-only escalation | Explicit HTTP integration |
+**Different integrations have different contracts.** Compatibility is explicit, not a promise to observe everything an agent does.
 
-**DeepSeek harness and additional agents are not implemented.** Their scope remains
-deferred. No adapter manages native provider credentials or silently switches a
-native agent's model.
+| Integration | Observation boundary | Completion & recovery |
+| :--- | :--- | :--- |
+| **[Claude Code](docs/CLAUDE_CODE.md)** | Supported native command hooks | Stop checks, retained failures, bounded continuation |
+| **[Codex](docs/CODEX.md)** | Supported hooks, Bash inputs, and patch paths | Stop checks; task, checkpoint, and budget persist through recovery |
+| **[OpenCode](docs/OPENCODE.md)** | Emitted JSONL from an owned CLI process | Checks after clean process exit; same-session retry |
+| **[Protocol runtime](docs/PROTOCOL.md)** | OpenAI-compatible / Anthropic-compatible protocol traffic and independent filesystem checks | Managed-tool or relay lifecycle; step-only escalation |
 
-For protocol mode, configure one OpenAI-compatible upstream and start the local
-API with `aletheia start` (default port 8030). Browser UI and protocol API are
-separate services with separate trust boundaries.
-[Full protocol setup, headers, managed/relay modes, and examples →](docs/PROTOCOL.md)
+For protocol mode, configure an OpenAI-compatible upstream and run `aletheia start` (default port **8030**). The protocol API and browser console are separate services with separate trust boundaries. See the [protocol guide](docs/PROTOCOL.md) for headers, configuration, and managed/relay examples.
 
-## Recovery you can inspect
+DeepSeek harness support and additional agents are **not implemented**. No adapter manages native provider credentials or silently switches a native agent's model.
 
-1. Capture the starting worktree, including existing uncommitted work in snapshot scope.
-2. Observe supported agent activity without inventing hidden plans or tool calls.
-3. Run your **tests + typecheck + git-diff** and check stable file fingerprints.
-4. If checks fail, preserve unsuccessful contents in a content-addressed checkpoint.
-5. Restore the baseline only when safe, then return bounded failure context for a correction.
-6. Stop with an explicit not-verified outcome when evidence or retry budget is exhausted.
+## A failure should leave a trail—not a mystery.
 
-A restored baseline is not proof that a failed task was fixed. Missing checks,
-unfinished tools, stale verification, and uncertain process boundaries do not
-produce successful completion. Native recovery is capped at `min(max_attempts, 3)`
-Stop attempts / owned CLI invocations. Native escalation requests are distinct
-from actual model switches.
+<p align="center">
+  <img src="docs/brand/supervision-flow.svg" alt="Conceptual supervision flow: observe supported activity, verify configured checks, recover within bounds, and resolve as verified or not verified. Capabilities vary by integration." width="100%">
+</p>
 
-## Evidence, not a benchmark
+The full runtime lifecycle is **Observe → Validate → Repair → Execute → Verify → Recover → Escalate**. Each integration exposes a specific part of that contract.
 
-Official client integration tests have exercised Claude Code **2.1.278**, Codex
-**0.155.1**, and OpenCode **1.18.31** against isolated, scripted local model endpoints.
-Those are real clients and native tools, but **not real-model quality tests**.
+1. **Establish a baseline.** Capture the starting worktree, including pre-existing uncommitted work within snapshot scope.
+2. **Observe supported activity.** Record available evidence without inventing hidden plans or tool calls.
+3. **Verify independently.** Run configured tests, type checks, and Git diff checks; check stable file fingerprints.
+4. **Preserve the failure.** Retain unsuccessful contents in a content-addressed checkpoint before rollback.
+5. **Recover within bounds.** Restore the baseline only when safe and return failure context for a correction.
+6. **Report honestly.** Return an explicit not-verified outcome when evidence is insufficient or the retry budget is exhausted.
+
+A restored baseline is **not** proof that a failed task was fixed. Missing checks, unfinished tools, stale verification, and uncertain process boundaries do not count as successful completion. Native recovery is capped at `min(max_attempts, 3)` Stop attempts / owned CLI invocations. A native escalation request is not an actual model switch.
+
+## Proof without the hype
+
+Official client integration tests have exercised **Claude Code 2.1.278**, **Codex 0.155.1**, and **OpenCode 1.18.31** against isolated, scripted local model endpoints.
+
+These use real clients and native tools. They are **not real-model quality benchmarks**.
 
 | Controlled upstream-repository test | Injected failure | Verified recovery |
-| --- | --- | --- |
-| Codex + ItsDangerous | 40 failed / 257 passed | **297 passed**, mypy 8 files, git-diff passed |
-| OpenCode + Click | 15 failed / 2044 passed | **2059 passed**, mypy 28 files, git-diff passed |
+| :--- | :--- | :--- |
+| **Codex + ItsDangerous** | 40 failed / 257 passed | **297 passed** · mypy: 8 files · Git diff passed |
+| **OpenCode + Click** | 15 failed / 2,044 passed | **2,059 passed** · mypy: 28 files · Git diff passed |
 
-Click also reported 24 skipped, 31,000 deselected, and 1 xfailed; these were not
-counted as passes. See [versions, pinned revisions, reports and reproduction](docs/VALIDATION.md).
-Real weak/free model effectiveness, market superiority, and manual time savings
-are **unmeasured**.
+Click also reported 24 skipped, 31,000 deselected, and 1 xfailed; these are not counted as passes. Real weak/free model effectiveness, comparative superiority, and manual time savings remain **unmeasured**.
 
-## Boundaries worth knowing
+[Inspect versions, pinned revisions, reports, and reproduction steps →](docs/VALIDATION.md)
 
-- **One agent/supervisor per worktree.** A read-only console is fine alongside it;
-  competing native/protocol supervisors are not.
-- Hooks and process ownership are **not an OS sandbox** or a complete action audit.
-  Native permissions, trusted configuration and isolated worktrees still matter.
-- OpenCode is post-execution supervision, not pre-tool interception. Its emitted
-  JSONL can omit internal activity; only observed results are counted.
-- Ignored/generated files and external side effects are outside checkpoint scope.
-  Do not run detached/background agents or unsupported subagent workflows.
-- Checks prove the configured checks—not every natural-language requirement, nor
-  resistance to malicious changes to the tests themselves.
-- The real console exposes source/evidence to authorized viewers. Keep it private.
-  Non-loopback serving requires `ALETHEIA_UI_TOKEN`; the protocol API separately
-  uses `ALETHEIA_LOCAL_TOKEN`. Never publish credentials or expose execution APIs.
+## Know the boundary
 
-[Security policy →](SECURITY.md) · [Architecture →](docs/ARCHITECTURE.md) ·
-[Frozen schema →](docs/SCHEMA.md)
+Aletheia is a supervision runtime, **not an OS sandbox or a guarantee of correctness**.
 
-## Develop and validate
+- **One supervisor per worktree.** Do not run competing native/protocol supervisors. The read-only console can coexist with one.
+- **Observation is limited.** Hooks are not a complete action audit. OpenCode supervision is post-execution; its JSONL may omit internal activity.
+- **Checkpoints have scope.** Ignored/generated files and external side effects are outside it. Detached/background agents and unsupported subagent workflows are not supported.
+- **Checks are only as good as their coverage.** Passing configured checks does not prove every natural-language requirement or protect against malicious changes to the tests themselves.
+- **Keep permissions and isolation.** Native permission controls, trusted configuration, and dedicated worktrees still matter.
+- **Keep the console private.** It exposes source and evidence to authorized viewers. Non-loopback serving requires `ALETHEIA_UI_TOKEN`; the protocol API separately uses `ALETHEIA_LOCAL_TOKEN`. Never publish credentials or expose execution APIs.
+
+[Security policy →](SECURITY.md)
+
+## Built to be inspected. Open to contributions.
+
+After installing the development dependencies, run these commands from the Aletheia checkout:
 
 ```sh
 pytest -q
@@ -228,7 +233,7 @@ mypy aletheia
 python scripts/demo.py --output .aletheia/demo-report.json
 ```
 
-To include official native clients (otherwise those tests explicitly skip):
+To include official native clients, supply their executable paths; otherwise those tests explicitly skip:
 
 ```sh
 ALETHEIA_CLAUDE_BIN=/absolute/path/to/claude \
@@ -236,38 +241,54 @@ ALETHEIA_CODEX_BIN=/absolute/path/to/codex \
 ALETHEIA_OPENCODE_BIN=/absolute/path/to/opencode pytest -q
 ```
 
-Browser interaction and accessibility checks have a separate optional Node test
-harness; no Node runtime or frontend build is required to use the console.
-[Contribution and browser-test instructions →](CONTRIBUTING.md)
+Browser interaction and accessibility checks use a separate optional Node harness. **Using the console requires no Node runtime or frontend build.** See [Contributing](CONTRIBUTING.md) for the development workflow and browser-test instructions.
 
-## Find your way around
+## Go deeper
+
+| Start here | Explore the internals |
+| :--- | :--- |
+| [Getting started](docs/GETTING_STARTED.md) | [Architecture](docs/ARCHITECTURE.md) |
+| [Console & security](docs/CONSOLE.md) | [Frozen task/event schema](docs/SCHEMA.md) |
+| [Protocol integration](docs/PROTOCOL.md) | [Validation & reproduction](docs/VALIDATION.md) |
+| [Contributing](CONTRIBUTING.md) | [Changelog](CHANGELOG.md) |
+
+<details>
+<summary><strong>Repository map</strong></summary>
 
 ```text
 aletheia/
-  adapters/           Native hooks and owned OpenCode runner
-  console.py          Separate read-only console API
-  web/                Packaged UI, original SVG assets and local font
-  runtime.py          Supervision lifecycle
-  verify.py           Independent command evidence
-  project.py          Checkpoints and inspectable rollback
-  state.py            Frozen task/event persistence
-  server.py           Protocol API (unchanged browser boundary)
-docs/                 Setup, contracts, evidence and design guidelines
-scripts/              Reproducible validation and asset-sync tools
-tests/                Contract, regression, security and browser checks
+├── adapters/       Native hooks and owned OpenCode runner
+├── console.py      Separate read-only console API
+├── web/            Packaged UI, SVG assets, and local font
+├── runtime.py      Supervision lifecycle
+├── verify.py       Independent command evidence
+├── project.py      Checkpoints and inspectable rollback
+├── state.py        Task/event persistence
+└── server.py       Protocol API
+docs/               Setup, contracts, evidence, and brand assets
+scripts/            Reproducible validation and asset-sync tools
+tests/              Contract, regression, security, and browser checks
 ```
 
-[Console](docs/CONSOLE.md) · [Brand kit](docs/BRAND.md) ·
-[Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
+</details>
 
-### Licensing
+## The mark: an A that asks for evidence
 
-Aletheia is released under the [Apache License, Version 2.0](LICENSE): use it,
-modify it, and build on it freely, with attribution and the patent grant that
-comes with the license. The bundled Manrope font is distributed under the
-[SIL Open Font License](aletheia/web/assets/OFL-Manrope.txt). The logo and
-illustrations were created for this project; see the [brand guide](docs/BRAND.md).
+<p align="center">
+  <img src="docs/brand/logo.svg" alt="Aletheia logo: a white open A intersected by a mint verification check on a violet rounded square." width="96" height="96">
+</p>
+
+**Aletheia** takes its name from the Greek word for truth. The **evidence monogram** combines an open, architectural **A** with a rising verification check: a small visual reminder that a claim needs support. Violet connects it to the console; mint distinguishes the check from the letterform.
+
+[SVG logo](docs/brand/logo.svg) · [PNG logo](docs/brand/logo.png) · [Monochrome](docs/brand/logo-monochrome.svg) · [Social card](docs/brand/social-card.png) · [Brand guide](docs/BRAND.md)
+
+## License
+
+Released under the [Apache License 2.0](LICENSE). The original logo and illustrations are included under the project license. The bundled Manrope font is distributed separately under the [SIL Open Font License](aletheia/web/assets/OFL-Manrope.txt).
 
 ---
 
-<p align="center"><strong>A little oversight. A lot more confidence.</strong></p>
+<p align="center">
+  <strong>Let agents move fast. Make “done” earn its meaning.</strong><br>
+  <sub>Aletheia · Local supervision. Inspectable evidence. Bounded recovery.</sub>
+</p>
