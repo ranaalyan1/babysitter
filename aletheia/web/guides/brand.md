@@ -1,6 +1,6 @@
 # Aletheia brand & interface system
 
-## The idea: a second pair of eyes
+## The idea: claims need evidence
 
 Aletheia is calm, observant and practical. It makes software agents accountable
 without presenting itself as another agent or an all-powerful security boundary.
@@ -8,9 +8,15 @@ The name is **Aletheia** in prose and **aletheia.** in the wordmark. Aletheia
 (αλήθεια, Greek for “truth”) is one word: claims are only real once verified.
 Avoid infant/care-service imagery: this is developer tooling.
 
-The original **watchful bracket** mark combines rounded code brackets, two alert
-eyes, and a small check-shaped smile. Brackets suggest code and a protective
-boundary; the check connects the face directly to verification.
+The **evidence monogram** combines an open, architectural A with a rising
+verification check. The white letterform represents Aletheia; the mint check
+represents evidence supporting a claim. A violet rounded square connects the
+mark to the existing interface palette. The monochrome version uses one ink.
+
+The refreshed repository artwork and console logo use this mark. Existing demo
+screenshots and the in-product workflow illustration retain the earlier
+watchful-bracket artwork; the screenshots are historical captures, not edited
+representations of the refreshed interface.
 
 ## Assets
 
@@ -20,12 +26,13 @@ boundary; the check connects the face directly to verification.
 - `docs/brand/wordmark-dark.svg` — reversed wordmark on charcoal.
 - `docs/brand/logo.png` — high-resolution raster mark.
 - `docs/brand/readme-banner.svg` — repository cover artwork.
+- `docs/brand/supervision-flow.svg` — conceptual integration-dependent workflow.
 - `docs/brand/social-card.png` — 1200×630 social/repository image.
 - `docs/brand/console-desktop.png` — actual browser capture of labeled demo mode.
 - `docs/brand/console-mobile.png` — actual narrow-screen browser capture.
 - `aletheia/web/assets/oversight.svg` — original in-product workflow illustration.
 
-Keep at least one eye-width of clear space around the mark. Minimum icon size:
+Keep at least one stroke-width of clear space around the mark. Minimum icon size:
 24 px; use 32 px or larger in primary navigation. Do not stretch it, rotate it,
 put it on noisy imagery, or substitute an unrelated mascot. The interface uses
 text labels alongside icons; the logo is not a status indicator.
@@ -34,8 +41,9 @@ text labels alongside icons; the logo is not a status indicator.
 
 | Role | Value | Use |
 | --- | --- | --- |
-| Watchful violet | `#8871F6` | Logo and illustration |
-| Action violet | `#7654D0` | Primary controls and active accents |
+| Watchful violet | `#8871F6` | Supporting accents and illustration |
+| Evidence mint | `#BFF5DF` | Logo check and dark-branding highlights |
+| Action violet | `#7654D0` | Logo tile, primary controls, and active accents |
 | Night | `#19191F` | Sidebar and dark branding |
 | Ink | `#282730` | Primary text |
 | Canvas | `#F8F9FB` | Workspace background |
@@ -68,6 +76,7 @@ Say **“Recorded in progress.”** Not “Agent connected” without a heartbea
 Say **“Inspect retained changes.”** Not “We saved everything.”
 Say **“Recovery budget exhausted.”** Not “Something went wrong.”
 
+Repository headline: **Less blind trust. More proof.**
 Core line: **Your agents build. We check the work.**
 Supporting line: **A little oversight. A lot more confidence.**
 
