@@ -9,3 +9,8 @@ dist/
 .test0/artifacts/
 *.log
 .DS_Store
+
+# Babysitter (Python product dir)
+.babysitter/
+__pycache__/
+*.pyc

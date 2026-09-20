@@ -1,0 +1,6 @@
+#!/bin/sh
+# Babysitter CLI shim: sets PYTHONPATH and execs the CLI.
+# Usage: ./babysitter init|start|doctor|trace|demo [...]
+HERE="$(cd "$(dirname "$0")" && pwd)"
+export PYTHONPATH="$HERE/src${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m babysitter "$@"

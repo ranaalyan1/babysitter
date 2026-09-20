@@ -64,6 +64,8 @@ packages/
                 packages/repairgate/docs/ARCHITECTURE.md.
 skills/         Installable SKILL.md skills (spec-compliant).
 docs/           Architecture and usage documentation.
+babysitter/     Separate Python product: local runtime supervisor for AI
+                coding agents. See babysitter/README.md.
 ```
 
 ### repairgate
@@ -82,6 +84,23 @@ for the full design and OSS precedent.
 
 ```bash
 node packages/repairgate/dist/cli.js serve --demo
+```
+
+### babysitter
+
+`babysitter` is a separate Python product that lives in this monorepo:
+a local runtime supervisor for AI coding agents. It observes agents as
+they work, validates and repairs their tool calls, verifies results with
+real test/typecheck runs and git-diff inspection, and automatically
+recovers (retry with failure context, checkpoint/rollback) or escalates
+to a stronger model — a model can claim success, Babysitter requires
+evidence. See [`babysitter/README.md`](babysitter/README.md) for usage
+and [`babysitter/docs/ARCHITECTURE.md`](babysitter/docs/ARCHITECTURE.md)
+for the full design.
+
+```bash
+pip install -r babysitter/requirements.txt
+./babysitter/babysitter demo
 ```
 
 ## Quick start

@@ -1,0 +1,5 @@
+# Babysitter v0.1 — boring, proven tech only.
+fastapi>=0.110,<1
+uvicorn[standard]>=0.29,<1
+httpx>=0.27,<1
+pytest>=8,<9

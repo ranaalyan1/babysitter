@@ -31,3 +31,22 @@ jobs:
 
       - name: Validate skills against the Agent Skills spec
         run: node packages/cli/dist/index.js skills validate
+
+  babysitter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r babysitter/requirements.txt
+
+      - name: Test
+        run: python3 -m pytest babysitter/tests/ -q
+
+      - name: Acceptance demo
+        run: ./babysitter/babysitter demo
