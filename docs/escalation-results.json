@@ -1,0 +1,235 @@
+{
+  "fixture_provider": true,
+  "real_model_quality_evaluated": false,
+  "human_interventions": 0,
+  "transport": "in-process ASGI runtime + real HTTP upstream",
+  "project": "demo-29ff7f5b",
+  "git_revision": "da5d78b5262edb5f53c064ff18ae1fe74bc265c7",
+  "task_id": "8e981cce28b44dbb9d97aea655497379",
+  "state": "verified_complete",
+  "model_sequence": [
+    "fixture-weak",
+    "fixture-weak",
+    "fixture-strong",
+    "fixture-weak"
+  ],
+  "elapsed_seconds": 2.918,
+  "metrics": {
+    "tasks_total": 1,
+    "tasks_terminal": 1,
+    "tasks_verified_complete": 1,
+    "task_success_rate_percent": 100.0,
+    "invalid_tool_call_events": 1,
+    "deterministic_repairs": 1,
+    "repair_rate_percent": 100.0,
+    "invalid_calls_followed_by_valid_call_same_step": 1,
+    "tool_call_recovery_rate_percent": 100.0,
+    "verification_runs": 4,
+    "verification_failures_caught_before_completion": 2,
+    "verification_catch_rate_percent": 50.0,
+    "escalations": 1,
+    "escalation_rate_percent": 100.0,
+    "recovered_steps_without_escalation": 0,
+    "unnecessary_escalations_avoided": null,
+    "tasks_completed_on_base_model_only": 0,
+    "tasks_completed_on_weak_or_free_model": null,
+    "time_saved_vs_manual_seconds": null,
+    "limitations": [
+      "Tool recovery means a later valid call in the same step; not proof of semantic equivalence.",
+      "Recovered steps without escalation is an observable proxy, not a counterfactual count of unnecessary escalations.",
+      "Base-model-only is measured; weak/free status and provider pricing are not inferred.",
+      "No manual baseline collected; time saved is unavailable.",
+      "Verification proves configured checks, not arbitrary natural-language goal satisfaction."
+    ]
+  },
+  "verification": [
+    {
+      "status": "failed",
+      "files": [
+        "calc.py"
+      ],
+      "fingerprint": "3028e56128ecf9c277f201745aee93729514d80d8d4bda2264040faf6a52aa9a",
+      "commands": [
+        {
+          "name": "test",
+          "argv": [
+            "/home/user/test0/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider"
+          ],
+          "exit_code": 1,
+          "output_tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n___________________________________ test_add ___________________________________\n\n    def test_add():\n>       assert add(2, 3) == 5\nE       assert -1 == 5\nE        +  where -1 = add(2, 3)\n\ntest_calc.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED test_calc.py::test_add - assert -1 == 5\n +  where -1 = add(2, 3)\n1 failed in 0.02s\n"
+        },
+        {
+          "name": "typecheck",
+          "argv": [
+            "/home/user/test0/.venv/bin/python",
+            "-m",
+            "mypy"
+          ],
+          "exit_code": 0,
+          "output_tail": "Success: no issues found in 1 source file\n"
+        },
+        {
+          "name": "git-diff",
+          "argv": [
+            "git",
+            "--no-pager",
+            "diff",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--check",
+            "HEAD",
+            "--"
+          ],
+          "exit_code": 0,
+          "output_tail": ""
+        }
+      ]
+    },
+    {
+      "status": "failed",
+      "files": [
+        "calc.py"
+      ],
+      "fingerprint": "bfb52b10aec72f3052cd61a2519bd37239692d22bd1e3ccd61b2af9a7c06bbf1",
+      "commands": [
+        {
+          "name": "test",
+          "argv": [
+            "/home/user/test0/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider"
+          ],
+          "exit_code": 1,
+          "output_tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n___________________________________ test_add ___________________________________\n\n    def test_add():\n>       assert add(2, 3) == 5\nE       assert -1 == 5\nE        +  where -1 = add(2, 3)\n\ntest_calc.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED test_calc.py::test_add - assert -1 == 5\n +  where -1 = add(2, 3)\n1 failed in 0.02s\n"
+        },
+        {
+          "name": "typecheck",
+          "argv": [
+            "/home/user/test0/.venv/bin/python",
+            "-m",
+            "mypy"
+          ],
+          "exit_code": 0,
+          "output_tail": "Success: no issues found in 1 source file\n"
+        },
+        {
+          "name": "git-diff",
+          "argv": [
+            "git",
+            "--no-pager",
+            "diff",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--check",
+            "HEAD",
+            "--"
+          ],
+          "exit_code": 2,
+          "output_tail": "calc.py:3: new blank line at EOF.\n"
+        }
+      ]
+    },
+    {
+      "status": "passed",
+      "files": [
+        "calc.py"
+      ],
+      "fingerprint": "e54b553c00cb410fe4c4924d1af9744aa46a16db1074c7a04243c6e3d1dce80f",
+      "commands": [
+        {
+          "name": "test",
+          "argv": [
+            "/home/user/test0/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider"
+          ],
+          "exit_code": 0,
+          "output_tail": ".                                                                        [100%]\n1 passed in 0.01s\n"
+        },
+        {
+          "name": "typecheck",
+          "argv": [
+            "/home/user/test0/.venv/bin/python",
+            "-m",
+            "mypy"
+          ],
+          "exit_code": 0,
+          "output_tail": "Success: no issues found in 1 source file\n"
+        },
+        {
+          "name": "git-diff",
+          "argv": [
+            "git",
+            "--no-pager",
+            "diff",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--check",
+            "HEAD",
+            "--"
+          ],
+          "exit_code": 0,
+          "output_tail": ""
+        }
+      ]
+    },
+    {
+      "status": "passed",
+      "files": [],
+      "fingerprint": "e54b553c00cb410fe4c4924d1af9744aa46a16db1074c7a04243c6e3d1dce80f",
+      "commands": [
+        {
+          "name": "test",
+          "argv": [
+            "/home/user/test0/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider"
+          ],
+          "exit_code": 0,
+          "output_tail": ".                                                                        [100%]\n1 passed in 0.01s\n"
+        },
+        {
+          "name": "typecheck",
+          "argv": [
+            "/home/user/test0/.venv/bin/python",
+            "-m",
+            "mypy"
+          ],
+          "exit_code": 0,
+          "output_tail": "Success: no issues found in 1 source file\n"
+        },
+        {
+          "name": "git-diff",
+          "argv": [
+            "git",
+            "--no-pager",
+            "diff",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--check",
+            "HEAD",
+            "--"
+          ],
+          "exit_code": 0,
+          "output_tail": ""
+        }
+      ]
+    }
+  ],
+  "checkpoint_count": 4,
+  "trace_file": "/home/user/test0/.babysitter/demo-29ff7f5b/.babysitter/demo-8e981cce28b44dbb9d97aea655497379.json"
+}

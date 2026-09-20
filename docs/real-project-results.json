@@ -1,0 +1,376 @@
+[
+  {
+    "fixture_provider": true,
+    "real_model_quality_evaluated": false,
+    "human_interventions": 0,
+    "transport": "in-process ASGI runtime + real HTTP upstream",
+    "project": "itsdangerous",
+    "git_revision": "672971d66a2ef9f85151e53283113f33d642dabd",
+    "task_id": "ffbf067e2e3343bea2641b6ddb4d5e50",
+    "state": "verified_complete",
+    "model_sequence": [
+      "fixture-weak",
+      "fixture-weak",
+      "fixture-weak"
+    ],
+    "elapsed_seconds": 3.861,
+    "metrics": {
+      "tasks_total": 1,
+      "tasks_terminal": 1,
+      "tasks_verified_complete": 1,
+      "task_success_rate_percent": 100.0,
+      "invalid_tool_call_events": 1,
+      "deterministic_repairs": 1,
+      "repair_rate_percent": 100.0,
+      "invalid_calls_followed_by_valid_call_same_step": 1,
+      "tool_call_recovery_rate_percent": 100.0,
+      "verification_runs": 3,
+      "verification_failures_caught_before_completion": 1,
+      "verification_catch_rate_percent": 33.33,
+      "escalations": 0,
+      "escalation_rate_percent": 0.0,
+      "recovered_steps_without_escalation": 1,
+      "unnecessary_escalations_avoided": null,
+      "tasks_completed_on_base_model_only": 1,
+      "tasks_completed_on_weak_or_free_model": null,
+      "time_saved_vs_manual_seconds": null,
+      "limitations": [
+        "Tool recovery means a later valid call in the same step; not proof of semantic equivalence.",
+        "Recovered steps without escalation is an observable proxy, not a counterfactual count of unnecessary escalations.",
+        "Base-model-only is measured; weak/free status and provider pricing are not inferred.",
+        "No manual baseline collected; time saved is unavailable.",
+        "Verification proves configured checks, not arbitrary natural-language goal satisfaction."
+      ]
+    },
+    "verification": [
+      {
+        "status": "failed",
+        "files": [
+          "src/itsdangerous/encoding.py"
+        ],
+        "fingerprint": "2f97931913b6c1eff17ac12875f2b619073f555e3d48307952cc43b12c310c1e",
+        "commands": [
+          {
+            "name": "test",
+            "argv": [
+              "/home/user/test0/.venv/bin/python",
+              "-m",
+              "pytest",
+              "-q",
+              "-p",
+              "no:cacheprovider"
+            ],
+            "exit_code": 1,
+            "output_tail": ", {'id': 42}) == (False, {'id': 42})\n  \n  At index 0 diff: True != False\n  \n  Full diff:\n    (\n  -     False,\n  +     True,\n        {\n            'id': 42,\n        },\n    )\nFAILED tests/test_itsdangerous/test_url_safe.py::TestURLSafeTimedSerializer::test_loads_unsafe[zlib] - AssertionError: assert (True, 'aaaaa...aaaaaaaaaaaa') == (False, 'aaaa...aaaaaaaaaaaa')\n  \n  At index 0 diff: True != False\n  \n  Full diff:\n    (\n  -     False,\n  +     True,\n        'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',\n    )\n40 failed, 257 passed in 0.83s\n"
+          },
+          {
+            "name": "typecheck",
+            "argv": [
+              "/home/user/test0/.venv/bin/python",
+              "-m",
+              "mypy"
+            ],
+            "exit_code": 0,
+            "output_tail": "Success: no issues found in 8 source files\n"
+          },
+          {
+            "name": "git-diff",
+            "argv": [
+              "git",
+              "--no-pager",
+              "diff",
+              "--no-ext-diff",
+              "--no-textconv",
+              "--check",
+              "HEAD",
+              "--"
+            ],
+            "exit_code": 0,
+            "output_tail": ""
+          }
+        ]
+      },
+      {
+        "status": "passed",
+        "files": [
+          "src/itsdangerous/encoding.py"
+        ],
+        "fingerprint": "d2ca3c74291991f035b5dfcd226df6b6df16c0e3e3b3d93c1503882f1137dc85",
+        "commands": [
+          {
+            "name": "test",
+            "argv": [
+              "/home/user/test0/.venv/bin/python",
+              "-m",
+              "pytest",
+              "-q",
+              "-p",
+              "no:cacheprovider"
+            ],
+            "exit_code": 0,
+            "output_tail": "........................................................................ [ 24%]\n........................................................................ [ 48%]\n........................................................................ [ 72%]\n........................................................................ [ 96%]\n.........                                                                [100%]\n297 passed in 0.68s\n"
+          },
+          {
+            "name": "typecheck",
+            "argv": [
+              "/home/user/test0/.venv/bin/python",
+              "-m",
+              "mypy"
+            ],
+            "exit_code": 0,
+            "output_tail": "Success: no issues found in 8 source files\n"
+          },
+          {
+            "name": "git-diff",
+            "argv": [
+              "git",
+              "--no-pager",
+              "diff",
+              "--no-ext-diff",
+              "--no-textconv",
+              "--check",
+              "HEAD",
+              "--"
+            ],
+            "exit_code": 0,
+            "output_tail": ""
+          }
+        ]
+      },
+      {
+        "status": "passed",
+        "files": [],
+        "fingerprint": "d2ca3c74291991f035b5dfcd226df6b6df16c0e3e3b3d93c1503882f1137dc85",
+        "commands": [
+          {
+            "name": "test",
+            "argv": [
+              "/home/user/test0/.venv/bin/python",
+              "-m",
+              "pytest",
+              "-q",
+              "-p",
+              "no:cacheprovider"
+            ],
+            "exit_code": 0,
+            "output_tail": "........................................................................ [ 24%]\n........................................................................ [ 48%]\n........................................................................ [ 72%]\n........................................................................ [ 96%]\n.........                                                                [100%]\n297 passed in 0.66s\n"
+          },
+          {
+            "name": "typecheck",
+            "argv": [
+              "/home/user/test0/.venv/bin/python",
+              "-m",
+              "mypy"
+            ],
+            "exit_code": 0,
+            "output_tail": "Success: no issues found in 8 source files\n"
+          },
+          {
+            "name": "git-diff",
+            "argv": [
+              "git",
+              "--no-pager",
+              "diff",
+              "--no-ext-diff",
+              "--no-textconv",
+              "--check",
+              "HEAD",
+              "--"
+            ],
+            "exit_code": 0,
+            "output_tail": ""
+          }
+        ]
+      }
+    ],
+    "checkpoint_count": 3,
+    "trace_file": "/home/user/validation-repos/itsdangerous/.babysitter/demo-ffbf067e2e3343bea2641b6ddb4d5e50.json"
+  },
+  {
+    "fixture_provider": true,
+    "real_model_quality_evaluated": false,
+    "human_interventions": 0,
+    "transport": "in-process ASGI runtime + real HTTP upstream",
+    "project": "click",
+    "git_revision": "6aabf099bfdd4c1e75fe8d0e0d4241372b988ab1",
+    "task_id": "208d17636729463e8a4637184e59581a",
+    "state": "verified_complete",
+    "model_sequence": [
+      "fixture-weak",
+      "fixture-weak",
+      "fixture-weak"
+    ],
+    "elapsed_seconds": 21.107,
+    "metrics": {
+      "tasks_total": 1,
+      "tasks_terminal": 1,
+      "tasks_verified_complete": 1,
+      "task_success_rate_percent": 100.0,
+      "invalid_tool_call_events": 1,
+      "deterministic_repairs": 1,
+      "repair_rate_percent": 100.0,
+      "invalid_calls_followed_by_valid_call_same_step": 1,
+      "tool_call_recovery_rate_percent": 100.0,
+      "verification_runs": 3,
+      "verification_failures_caught_before_completion": 1,
+      "verification_catch_rate_percent": 33.33,
+      "escalations": 0,
+      "escalation_rate_percent": 0.0,
+      "recovered_steps_without_escalation": 1,
+      "unnecessary_escalations_avoided": null,
+      "tasks_completed_on_base_model_only": 1,
+      "tasks_completed_on_weak_or_free_model": null,
+      "time_saved_vs_manual_seconds": null,
+      "limitations": [
+        "Tool recovery means a later valid call in the same step; not proof of semantic equivalence.",
+        "Recovered steps without escalation is an observable proxy, not a counterfactual count of unnecessary escalations.",
+        "Base-model-only is measured; weak/free status and provider pricing are not inferred.",
+        "No manual baseline collected; time saved is unavailable.",
+        "Verification proves configured checks, not arbitrary natural-language goal satisfaction."
+      ]
+    },
+    "verification": [
+      {
+        "status": "failed",
+        "files": [
+          "src/click/utils.py"
+        ],
+        "fingerprint": "7ccfe5fa238b5a8bd91db0b1ee2272c327b4e1db5d73ef33fa0af5e396c0b6c4",
+        "commands": [
+          {
+            "name": "test",
+            "argv": [
+              "/home/user/test0/.venv/bin/python",
+              "-m",
+              "pytest",
+              "-q",
+              "-p",
+              "no:cacheprovider"
+            ],
+            "exit_code": 1,
+            "output_tail": " assert 'plain\\nc\\\\:d...ain\\nc:e\\n_\\n' == 'plain\\nc\\\\:d...ain\\nc:e\\n_\\n'\n  \n    plain\n    c\\:d\n  - cee:dee\n  + BROKEN cee:dee\n    plain\n    c:e\n    _\nFAILED tests/test_shell_completion.py::test_zsh_full_complete_with_colons[env2-plain\\nc\\\\:d\\ncee:dee\\nplain\\nc:e\\n_\\n] - AssertionError: assert 'plain\\nc\\\\:d...ain\\nc:e\\n_\\n' == 'plain\\nc\\\\:d...ain\\nc:e\\n_\\n'\n  \n    plain\n    c\\:d\n  - cee:dee\n  + BROKEN cee:dee\n    plain\n    c:e\n    _\nFAILED tests/test_utils/test_make_default_short_help.py::test_make_default_short_help[-equal length, no dot] - AssertionError: assert 'BROKEN 123 567 90' == '123 567 90'\n  \n  - 123 567 90\n  + BROKEN 123 567 90\nFAILED tests/test_utils/test_make_default_short_help.py::test_make_default_short_help[-paragraph < max] - AssertionError: assert 'BROKEN 123 567' == '123 567'\n  \n  - 123 567\n  + BROKEN 123 567\nFAILED tests/test_utils/test_make_default_short_help.py::test_make_default_short_help[no-wrap mark-empty] - AssertionError: assert 'BROKEN ' == ''\n  \n  + BROKEN\nFAILED tests/test_utils/test_make_default_short_help.py::test_make_default_short_help[no-wrap mark-equal length, no dot] - AssertionError: assert 'BROKEN 123 567 90' == '123 567 90'\n  \n  - 123 567 90\n  + BROKEN 123 567 90\nFAILED tests/test_utils/test_make_default_short_help.py::test_make_default_short_help[no-wrap mark-paragraph < max] - AssertionError: assert 'BROKEN 123 567' == '123 567'\n  \n  - 123 567\n  + BROKEN 123 567\n15 failed, 2044 passed, 24 skipped, 31000 deselected, 1 xfailed in 4.69s\n"
+          },
+          {
+            "name": "typecheck",
+            "argv": [
+              "/home/user/test0/.venv/bin/python",
+              "-m",
+              "mypy"
+            ],
+            "exit_code": 0,
+            "output_tail": "Success: no issues found in 28 source files\n"
+          },
+          {
+            "name": "git-diff",
+            "argv": [
+              "git",
+              "--no-pager",
+              "diff",
+              "--no-ext-diff",
+              "--no-textconv",
+              "--check",
+              "HEAD",
+              "--"
+            ],
+            "exit_code": 0,
+            "output_tail": ""
+          }
+        ]
+      },
+      {
+        "status": "passed",
+        "files": [
+          "src/click/utils.py"
+        ],
+        "fingerprint": "a3533930791b63f77cd604085acfefb512f7244826d790a2282fd661fc1fed5b",
+        "commands": [
+          {
+            "name": "test",
+            "argv": [
+              "/home/user/test0/.venv/bin/python",
+              "-m",
+              "pytest",
+              "-q",
+              "-p",
+              "no:cacheprovider"
+            ],
+            "exit_code": 0,
+            "output_tail": "...................................................................... [ 41%]\n........................................................................ [ 44%]\n........................................................................ [ 48%]\n........................................................................ [ 51%]\n........................................................................ [ 55%]\n........................................................................ [ 58%]\n........................................................................ [ 62%]\n........................................................................ [ 65%]\n........................................................................ [ 69%]\n........................................................................ [ 72%]\n......sssssssssssssssssssss..................ss......................... [ 76%]\n........................................................................ [ 79%]\n........................................................................ [ 82%]\n.................................................s...................... [ 86%]\n........................................................................ [ 89%]\n........................................................................ [ 93%]\n........................................................................ [ 96%]\n....................................................................     [100%]\n2059 passed, 24 skipped, 31000 deselected, 1 xfailed in 4.20s\n"
+          },
+          {
+            "name": "typecheck",
+            "argv": [
+              "/home/user/test0/.venv/bin/python",
+              "-m",
+              "mypy"
+            ],
+            "exit_code": 0,
+            "output_tail": "Success: no issues found in 28 source files\n"
+          },
+          {
+            "name": "git-diff",
+            "argv": [
+              "git",
+              "--no-pager",
+              "diff",
+              "--no-ext-diff",
+              "--no-textconv",
+              "--check",
+              "HEAD",
+              "--"
+            ],
+            "exit_code": 0,
+            "output_tail": ""
+          }
+        ]
+      },
+      {
+        "status": "passed",
+        "files": [],
+        "fingerprint": "a3533930791b63f77cd604085acfefb512f7244826d790a2282fd661fc1fed5b",
+        "commands": [
+          {
+            "name": "test",
+            "argv": [
+              "/home/user/test0/.venv/bin/python",
+              "-m",
+              "pytest",
+              "-q",
+              "-p",
+              "no:cacheprovider"
+            ],
+            "exit_code": 0,
+            "output_tail": "...................................................................... [ 41%]\n........................................................................ [ 44%]\n........................................................................ [ 48%]\n........................................................................ [ 51%]\n........................................................................ [ 55%]\n........................................................................ [ 58%]\n........................................................................ [ 62%]\n........................................................................ [ 65%]\n........................................................................ [ 69%]\n........................................................................ [ 72%]\n......sssssssssssssssssssss..................ss......................... [ 76%]\n........................................................................ [ 79%]\n........................................................................ [ 82%]\n.................................................s...................... [ 86%]\n........................................................................ [ 89%]\n........................................................................ [ 93%]\n........................................................................ [ 96%]\n....................................................................     [100%]\n2059 passed, 24 skipped, 31000 deselected, 1 xfailed in 4.36s\n"
+          },
+          {
+            "name": "typecheck",
+            "argv": [
+              "/home/user/test0/.venv/bin/python",
+              "-m",
+              "mypy"
+            ],
+            "exit_code": 0,
+            "output_tail": "Success: no issues found in 28 source files\n"
+          },
+          {
+            "name": "git-diff",
+            "argv": [
+              "git",
+              "--no-pager",
+              "diff",
+              "--no-ext-diff",
+              "--no-textconv",
+              "--check",
+              "HEAD",
+              "--"
+            ],
+            "exit_code": 0,
+            "output_tail": ""
+          }
+        ]
+      }
+    ],
+    "checkpoint_count": 3,
+    "trace_file": "/home/user/validation-repos/click/.babysitter/demo-208d17636729463e8a4637184e59581a.json"
+  }
+]
