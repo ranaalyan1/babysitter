@@ -1,0 +1,9 @@
+{
+  "name": "babysitter-console-browser-tests",
+  "private": true,
+  "description": "Optional development-only browser checks; no UI build required",
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "playwright": "1.63.0"
+  }
+}

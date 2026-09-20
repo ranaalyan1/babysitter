@@ -1,0 +1,68 @@
+{
+  "date": "2026-09-20",
+  "version": "0.4.0",
+  "mode": "synthetic-console-fixtures + browser interactions; not a model benchmark",
+  "python_suite": {
+    "passed": 207,
+    "duration_seconds": 165.45,
+    "native_clients_included": true
+  },
+  "mypy_source_files": 22,
+  "desktop_viewport": {
+    "width": 1440,
+    "height": 1100
+  },
+  "mobile_viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "uncaught_browser_errors": 0,
+  "limitations": [
+    "Automated WCAG A/AA checks on ten views, not a comprehensive accessibility certification",
+    "Public demo is synthetic; real SQLite state is covered by API regressions",
+    "No real-model effectiveness or manual time-savings measurement"
+  ],
+  "interaction_checks": "passed",
+  "accessibility": [
+    {
+      "page": "overview",
+      "violations": []
+    },
+    {
+      "page": "task evidence",
+      "violations": []
+    },
+    {
+      "page": "tasks",
+      "violations": []
+    },
+    {
+      "page": "Verification",
+      "violations": []
+    },
+    {
+      "page": "Checkpoints",
+      "violations": []
+    },
+    {
+      "page": "Agent integrations",
+      "violations": []
+    },
+    {
+      "page": "Workspace",
+      "violations": []
+    },
+    {
+      "page": "setup",
+      "violations": []
+    },
+    {
+      "page": "offline guide",
+      "violations": []
+    },
+    {
+      "page": "mobile overview",
+      "violations": []
+    }
+  ]
+}

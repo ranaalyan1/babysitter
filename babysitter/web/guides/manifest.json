@@ -1,0 +1,30 @@
+{
+  "getting-started": {
+    "title": "Getting started",
+    "source": "docs/GETTING_STARTED.md"
+  },
+  "console": {
+    "title": "Using the local console",
+    "source": "docs/CONSOLE.md"
+  },
+  "claude-code": {
+    "title": "Claude Code integration",
+    "source": "docs/CLAUDE_CODE.md"
+  },
+  "codex": {
+    "title": "Codex integration",
+    "source": "docs/CODEX.md"
+  },
+  "opencode": {
+    "title": "OpenCode integration",
+    "source": "docs/OPENCODE.md"
+  },
+  "validation": {
+    "title": "Measured results & limitations",
+    "source": "docs/VALIDATION.md"
+  },
+  "brand": {
+    "title": "Brand & design system",
+    "source": "docs/BRAND.md"
+  }
+}

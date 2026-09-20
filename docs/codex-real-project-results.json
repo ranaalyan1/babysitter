@@ -1,0 +1,140 @@
+{
+  "mode": "official-codex-cli+local-scripted-model",
+  "agent_version": "codex-cli 0.155.1",
+  "real_model_tested": false,
+  "project": "itsdangerous",
+  "git_revision": "672971d66a2ef9f85151e53283113f33d642dabd",
+  "verification": [
+    {
+      "status": "failed",
+      "fingerprint": "e2c3196c26802d676fd1e685b4389ffde8c20ffa2c46fb7219075dd9e12d99e2",
+      "commands": [
+        {
+          "name": "test",
+          "argv": [
+            "/home/user/test0/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider"
+          ],
+          "exit_code": 1,
+          "output_tail": ", {'id': 42}) == (False, {'id': 42})\n  \n  At index 0 diff: True != False\n  \n  Full diff:\n    (\n  -     False,\n  +     True,\n        {\n            'id': 42,\n        },\n    )\nFAILED tests/test_itsdangerous/test_url_safe.py::TestURLSafeTimedSerializer::test_loads_unsafe[zlib] - AssertionError: assert (True, 'aaaaa...aaaaaaaaaaaa') == (False, 'aaaa...aaaaaaaaaaaa')\n  \n  At index 0 diff: True != False\n  \n  Full diff:\n    (\n  -     False,\n  +     True,\n        'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',\n    )\n40 failed, 257 passed in 1.39s\n"
+        },
+        {
+          "name": "typecheck",
+          "argv": [
+            "/home/user/test0/.venv/bin/python",
+            "-m",
+            "mypy",
+            "--no-incremental"
+          ],
+          "exit_code": 0,
+          "output_tail": "Success: no issues found in 8 source files\n"
+        },
+        {
+          "name": "git-diff",
+          "argv": [
+            "git",
+            "--no-pager",
+            "diff",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--check",
+            "HEAD",
+            "--"
+          ],
+          "exit_code": 0,
+          "output_tail": ""
+        }
+      ]
+    },
+    {
+      "status": "passed",
+      "fingerprint": "ddb335e5d55b55ec64904fcb9f703df27ce580b88bc8ed4facc8d37f3933a47b",
+      "commands": [
+        {
+          "name": "test",
+          "argv": [
+            "/home/user/test0/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider"
+          ],
+          "exit_code": 0,
+          "output_tail": "........................................................................ [ 24%]\n........................................................................ [ 48%]\n........................................................................ [ 72%]\n........................................................................ [ 96%]\n.........                                                                [100%]\n297 passed in 0.87s\n"
+        },
+        {
+          "name": "typecheck",
+          "argv": [
+            "/home/user/test0/.venv/bin/python",
+            "-m",
+            "mypy",
+            "--no-incremental"
+          ],
+          "exit_code": 0,
+          "output_tail": "Success: no issues found in 8 source files\n"
+        },
+        {
+          "name": "git-diff",
+          "argv": [
+            "git",
+            "--no-pager",
+            "diff",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--check",
+            "HEAD",
+            "--"
+          ],
+          "exit_code": 0,
+          "output_tail": ""
+        }
+      ]
+    }
+  ],
+  "exit_code": 0,
+  "root": "/home/user/native-validation/itsdangerous",
+  "model_requests": 4,
+  "verification_statuses": [
+    "failed",
+    "passed"
+  ],
+  "observed_tool_results": 2,
+  "metrics": {
+    "tasks_total": 1,
+    "tasks_terminal": 1,
+    "tasks_verified_complete": 1,
+    "task_success_rate_percent": 100.0,
+    "invalid_tool_call_events": 0,
+    "deterministic_repairs": 0,
+    "repair_rate_percent": null,
+    "invalid_calls_followed_by_valid_call_same_step": 0,
+    "tool_call_recovery_rate_percent": null,
+    "verification_runs": 2,
+    "verification_failures_caught_before_completion": 1,
+    "verification_catch_rate_percent": 50.0,
+    "escalations": 0,
+    "escalation_rate_percent": 0.0,
+    "recovered_steps_without_escalation": 1,
+    "unnecessary_escalations_avoided": null,
+    "tasks_completed_on_base_model_only": 0,
+    "tasks_with_agent_owned_model_selection": 1,
+    "native_escalation_requests": 0,
+    "tasks_completed_on_weak_or_free_model": null,
+    "time_saved_vs_manual_seconds": null,
+    "limitations": [
+      "Tool recovery means a later valid call in the same step; not proof of semantic equivalence.",
+      "Recovered steps without escalation is an observable proxy, not a counterfactual count of unnecessary escalations.",
+      "Base-model-only is measured for protocol tasks; native agent model selection, weak/free status and pricing are not inferred.",
+      "No manual baseline collected; time saved is unavailable.",
+      "Verification proves configured checks, not arbitrary natural-language goal satisfaction."
+    ]
+  },
+  "test_only_hook_trust_bypass": true,
+  "permissions_auto_approved_by_adapter": false,
+  "duration_seconds": 12.275
+}
