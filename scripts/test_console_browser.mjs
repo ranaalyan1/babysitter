@@ -6,7 +6,7 @@ const require = createRequire(
 );
 const { chromium } = require("playwright");
 const { default: AxeBuilder } = require("@axe-core/playwright");
-const executablePath = process.env.BABYSITTER_BROWSER_EXECUTABLE;
+const executablePath = process.env.ALETHEIA_BROWSER_EXECUTABLE;
 const browser = await chromium.launch({
   headless: true,
   ...(executablePath
@@ -28,7 +28,7 @@ const context = await browser.newContext({
   acceptDownloads: true,
 });
 const page = await context.newPage();
-const base = process.env.BABYSITTER_CONSOLE_URL || "http://127.0.0.1:8040";
+const base = process.env.ALETHEIA_CONSOLE_URL || "http://127.0.0.1:8040";
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 const reports = [];
@@ -73,7 +73,7 @@ try {
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export trace" }).click();
   const download = await downloadPromise;
-  assert.equal(download.suggestedFilename(), "babysitter-demo-1084-trace.json");
+  assert.equal(download.suggestedFilename(), "aletheia-demo-1084-trace.json");
   const content = [];
   for await (const chunk of await download.createReadStream())
     content.push(chunk);
@@ -111,7 +111,7 @@ try {
     .getByRole("button", { name: "Set up an agent", exact: true })
     .click();
   await page.getByRole("button", { name: "Codex", exact: true }).click();
-  await page.getByText("babysitter codex install", { exact: false }).waitFor();
+  await page.getByText("aletheia codex install", { exact: false }).waitFor();
   await audit("setup");
   await page.keyboard.press("Escape");
   await page

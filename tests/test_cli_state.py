@@ -1,8 +1,8 @@
 import json
 
-from babysitter.cli import main
-from babysitter.metrics import metrics
-from babysitter.state import Store
+from aletheia.cli import main
+from aletheia.metrics import metrics
+from aletheia.state import Store
 
 
 def test_init_doctor_and_no_overwrite(workspace, capsys):
@@ -14,7 +14,7 @@ def test_init_doctor_and_no_overwrite(workspace, capsys):
 
 
 def test_trace_persists_and_redacts(workspace, capsys):
-    store = Store(workspace / ".babysitter")
+    store = Store(workspace / ".aletheia")
     task = store.create("test", "weak")
     store.event(task["id"], "observe", "example", {"api_key": "never log this", "message": "Bearer SECRET"}, state="failed")
     store.close()
@@ -34,5 +34,5 @@ def test_metrics_do_not_invent_missing_baselines():
 
 
 def test_nonloopback_start_requires_token(workspace, monkeypatch):
-    monkeypatch.delenv("BABYSITTER_LOCAL_TOKEN", raising=False)
+    monkeypatch.delenv("ALETHEIA_LOCAL_TOKEN", raising=False)
     assert main(["--root", str(workspace), "start", "--host", "0.0.0.0"]) == 1

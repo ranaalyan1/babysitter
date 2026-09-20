@@ -5,36 +5,36 @@ not a replacement Codex agent, model provider, app-server gateway or sandbox.
 
 ## Setup
 
-Use a dedicated git worktree with at least one commit. Install Babysitter into a
+Use a dedicated git worktree with at least one commit. Install Aletheia into a
 stable Python 3.11+ virtualenv and install/authenticate Codex using its official
 instructions. In the target repository:
 
 ```sh
-babysitter init --test 'python -m pytest -q' --typecheck 'python -m mypy src'
-# If already initialized, edit babysitter.json explicitly instead.
-babysitter doctor --offline
-babysitter codex install
-babysitter codex status
+aletheia init --test 'python -m pytest -q' --typecheck 'python -m mypy src'
+# If already initialized, edit aletheia.json explicitly instead.
+aletheia doctor --offline
+aletheia codex install
+aletheia codex status
 codex
 # Trust the project and review/trust the exact installed commands in /hooks.
 # Then start a fresh supervised prompt/session.
 ```
 
-No proxy server or Babysitter provider credentials are needed. Your normal Codex
+No proxy server or Aletheia provider credentials are needed. Your normal Codex
 model, authentication, permissions and sandbox stay authoritative. Installation
 does **not** grant hook trust or disable permission/sandbox checks. `status` checks
 local configuration, not Codex's private trust state or global feature settings.
 Untrusted, globally disabled, or externally replaced hooks will not supervise.
 Review hooks again after reinstalling or changing commands/interpreter paths.
 
-Remove only Babysitter's marked entries, after ending the session:
+Remove only Aletheia's marked entries, after ending the session:
 
 ```sh
-babysitter codex uninstall
+aletheia codex uninstall
 ```
 
 The installer merges `.codex/hooks.json`, preserves unrelated entries, and saves
-private backups in `.babysitter/`. Reinstall is idempotent. `.codex/config.toml`,
+private backups in `.aletheia/`. Reinstall is idempotent. `.codex/config.toml`,
 credentials and unrelated settings are not modified. Explicit project-level
 `features.hooks = false` is rejected rather than overridden.
 
@@ -66,13 +66,13 @@ for the operator, never counted as an actual native model switch.
 ## Trust boundary and evidence
 
 **Native exit code 0 or “done” text is not proof of verification.** Look for
-Babysitter's verified completion and inspect the task record:
+Aletheia's verified completion and inspect the task record:
 
 ```sh
-babysitter trace
-babysitter trace TASK_ID
-babysitter trace TASK_ID --metrics
-babysitter trace TASK_ID --checkpoint CHECKPOINT_ID
+aletheia trace
+aletheia trace TASK_ID
+aletheia trace TASK_ID --metrics
+aletheia trace TASK_ID --checkpoint CHECKPOINT_ID
 ```
 
 Hooks are guardrails, not a hard fail-closed security boundary. Disabled hooks,
@@ -88,8 +88,8 @@ malicious changes to tests. Global native configuration is not managed here.
 
 ```sh
 python scripts/native_agents_demo.py codex --executable /absolute/path/to/codex \
-  --output .babysitter/codex-report.json
-BABYSITTER_CODEX_BIN=/absolute/path/to/codex pytest -q tests/test_native_agents.py
+  --output .aletheia/codex-report.json
+ALETHEIA_CODEX_BIN=/absolute/path/to/codex pytest -q tests/test_native_agents.py
 ```
 
 This uses actual Codex tools/hooks with an isolated home and a local **scripted

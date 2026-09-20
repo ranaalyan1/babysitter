@@ -1,4 +1,4 @@
-# Contributing to Babysitter
+# Contributing to Aletheia
 
 Small, evidence-backed changes are welcome. Preserve the distinction between
 observed agent behavior, independently verified results, and unmeasured claims.
@@ -10,13 +10,13 @@ python -m venv .venv
 . .venv/bin/activate
 pip install -e '.[dev]'
 pytest -q
-mypy babysitter
+mypy aletheia
 ```
 
 No Node dependency or frontend build is needed to run the console:
 
 ```sh
-babysitter ui --demo
+aletheia ui --demo
 ```
 
 ## Before changing the runtime
@@ -28,8 +28,8 @@ babysitter ui --demo
 5. Keep permissions, authentication and model choice native to each agent.
 6. Add a failing regression first, including negative completion cases.
 
-Real native-client tests are opt-in through `BABYSITTER_CLAUDE_BIN`,
-`BABYSITTER_CODEX_BIN`, and `BABYSITTER_OPENCODE_BIN`. They use scripted local
+Real native-client tests are opt-in through `ALETHEIA_CLAUDE_BIN`,
+`ALETHEIA_CODEX_BIN`, and `ALETHEIA_OPENCODE_BIN`. They use scripted local
 endpoints and isolated homes, not real provider credentials. Never run fault
 injection against a working user repository.
 
@@ -47,13 +47,13 @@ The optional browser test harness uses Playwright and axe:
 npm install --prefix tests/browser
 npm exec --prefix tests/browser -- playwright install --with-deps chromium
 # In another terminal:
-babysitter ui --demo
+aletheia ui --demo
 # Then:
 node scripts/test_console_browser.mjs
 ```
 
-Set `BABYSITTER_CONSOLE_URL` to test another local preview URL. A custom Chromium
-binary can be selected with `BABYSITTER_BROWSER_EXECUTABLE`; custom shared-library
+Set `ALETHEIA_CONSOLE_URL` to test another local preview URL. A custom Chromium
+binary can be selected with `ALETHEIA_BROWSER_EXECUTABLE`; custom shared-library
 paths belong in your local environment, not the repository. Browser dependencies
 are development-only. Do not commit node_modules or browser downloads.
 
@@ -68,5 +68,6 @@ run `python scripts/sync_console_docs.py`; tests check that the copies match.
 - Update the appropriate guide and changelog; preserve historical validation reports.
 - Do not claim real-model effectiveness, complete action visibility or time savings without evidence.
 
-Report security issues privately; see `SECURITY.md`. A project-wide license still
-needs a maintainer decision. This guide does not grant additional license rights.
+Report security issues privately; see `SECURITY.md`. The project is released
+under the Apache License 2.0 (see `LICENSE`). Contributions are accepted under
+the same terms; this guide does not grant additional license rights.

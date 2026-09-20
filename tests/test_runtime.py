@@ -3,8 +3,8 @@ import sys
 
 import pytest
 
-from babysitter.provider import ProviderError
-from babysitter.runtime import SupervisionError, classify
+from aletheia.provider import ProviderError
+from aletheia.runtime import SupervisionError, classify
 from conftest import answer, call, tool_response
 
 MESSAGES = [{"role": "user", "content": "Fix addition and verify."}]

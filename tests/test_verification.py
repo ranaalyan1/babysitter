@@ -3,8 +3,8 @@ import sys
 
 import pytest
 
-from babysitter.project import UnsafePath
-from babysitter.verify import Verifier, run_command
+from aletheia.project import UnsafePath
+from aletheia.verify import Verifier, run_command
 
 
 def baseline(store, project):
@@ -58,8 +58,8 @@ async def test_missing_executable_is_evidence(setup_runtime):
 
 async def test_subprocess_does_not_receive_credentials(setup_runtime, monkeypatch):
     _, _, project, _ = setup_runtime
-    monkeypatch.setenv("BABYSITTER_PROVIDER_API_KEY", "secret")
-    result = await run_command([sys.executable, "-c", "import os; assert 'BABYSITTER_PROVIDER_API_KEY' not in os.environ"], project, 2, 100)
+    monkeypatch.setenv("ALETHEIA_PROVIDER_API_KEY", "secret")
+    result = await run_command([sys.executable, "-c", "import os; assert 'ALETHEIA_PROVIDER_API_KEY' not in os.environ"], project, 2, 100)
     assert result.exit_code == 0
 
 
@@ -90,7 +90,7 @@ def test_snapshot_failure_cannot_discard_changes(setup_runtime):
     assert (project.root / "calc.py").read_text() == "changed"
 
 
-@pytest.mark.parametrize("path", ["../outside", "/etc/passwd", ".git/config", ".babysitter/state.sqlite3", "x/../../oops", ".env"])
+@pytest.mark.parametrize("path", ["../outside", "/etc/passwd", ".git/config", ".aletheia/state.sqlite3", "x/../../oops", ".env"])
 def test_reject_unsafe_managed_paths(setup_runtime, path):
     _, _, project, _ = setup_runtime
     with pytest.raises(UnsafePath):

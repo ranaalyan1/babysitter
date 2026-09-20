@@ -66,7 +66,7 @@ project fingerprint; it is not a semantic measure of model reasoning.
    alter files outside the supervised inventory. Use OS/container isolation for
    untrusted projects. No claim of preventing hostile code execution.
 2. Managed file tools refuse absolute/traversal paths, symlinks, `.git`,
-   `.babysitter`, ignored files, `.env*`, `babysitter.json` and `.gitignore`.
+   `.aletheia`, ignored files, `.env*`, `aletheia.json` and `.gitignore`.
    Read/write limits are 1 MB per file. Checkpoint size defaults to 25 MB and
    fails closed; increase explicitly for larger repositories. Git submodules and
    special files are unsupported and fail closed.
@@ -84,7 +84,7 @@ project fingerprint; it is not a semantic measure of model reasoning.
    changes. Failed bytes are durable before rollback; corruption or unsafe paths
    halt recovery rather than silently losing changes. Checkpoints are retained
    indefinitely in v0.1; prune manually only after inspecting them.
-6. No concurrent-writer guarantee: a runtime/project lock serializes Babysitter,
+6. No concurrent-writer guarantee: a runtime/project lock serializes Aletheia,
    not editors or other programs. A content fingerprint detects observed changes
    during checks, not every transient filesystem operation. Use a dedicated
    worktree. The filesystem checks are not hardened against a hostile concurrent
@@ -98,7 +98,7 @@ project fingerprint; it is not a semantic measure of model reasoning.
    are rejected. There is no dashboard, CORS integration or account system.
 9. SQLite event payloads contain code, tool results and command output. Common
    credential labels and bearer strings are redacted; arbitrary secret values may
-   remain. File snapshots intentionally preserve original bytes. Keep `.babysitter`
+   remain. File snapshots intentionally preserve original bytes. Keep `.aletheia`
    private and out of Git. Sending protocol content to an upstream is an explicit
    local-operator choice; local Ollama keeps that boundary on the machine.
 10. Anthropic compatibility is a documented text/function subset, not a promise
@@ -120,6 +120,6 @@ or cloud control plane. `console.py` uses existing SQLite state with `mode=ro` a
 Packaged UI assets and offline documentation require no frontend build or CDN.
 The original protocol app and its browser-origin rejection are unchanged.
 
-Real non-loopback console API access requires its own `BABYSITTER_UI_TOKEN`.
+Real non-loopback console API access requires its own `ALETHEIA_UI_TOKEN`.
 Public demo mode uses synthetic fixtures and never reads the selected project.
 See [interface contract](INTERFACE_CONTRACT.md) and [console guide](CONSOLE.md).

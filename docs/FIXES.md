@@ -5,7 +5,7 @@ cases** that it did not cover; these were fixed rather than suppressing checks.
 
 | Failure | Fix |
 | --- | --- |
-| Unknown task caused an exception inside the error handler | Return HTTP 404 with a clean error and `X-Babysitter-Verified: false`; don't look up a nonexistent task twice. |
+| Unknown task caused an exception inside the error handler | Return HTTP 404 with a clean error and `X-Aletheia-Verified: false`; don't look up a nonexistent task twice. |
 | Malformed upstream completions or model lists escaped as AttributeError | Check JSON object/choice shapes before accessing fields; raise the normal recoverable `ProviderError`. |
 | Tests could run stale Python bytecode after same-size edits | Use a fresh per-command `PYTHONPYCACHEPREFIX` and disable bytecode writes. Existing project `.pyc` caches are not trusted or deleted. |
 | Forced tool selection stayed active on every internal turn | Honor it for the first accepted managed batch, then release it for recovery/final completion. |
@@ -38,13 +38,13 @@ python -m venv .venv
 . .venv/bin/activate
 pip install -e '.[dev]'
 pytest -q
-mypy babysitter scripts/demo.py
+mypy aletheia scripts/demo.py
 python scripts/demo.py --http
 python scripts/demo.py --http --fail-twice
 ```
 
-Local traces, reports and CLI server logs are under `.babysitter/demo-*/`.
+Local traces, reports and CLI server logs are under `.aletheia/demo-*/`.
 For real-model tasks, configure a reachable OpenAI-compatible provider and the
-project's actual test/typecheck commands using `babysitter init`, then run
-`babysitter doctor` before `babysitter start`. No model service is secretly
+project's actual test/typecheck commands using `aletheia init`, then run
+`aletheia doctor` before `aletheia start`. No model service is secretly
 installed or substituted for a configured provider.

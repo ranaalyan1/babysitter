@@ -4,21 +4,21 @@ The original runtime integration guide. For the product overview and native-agen
 
 ## Configure and start protocol mode
 
-Run these in the **target repository**, with `babysitter` on your PATH:
+Run these in the **target repository**, with `aletheia` on your PATH:
 
 ```sh
-babysitter init \
+aletheia init \
   --provider-url http://127.0.0.1:11434/v1 \
   --model qwen2.5-coder:7b \
   --test 'python -m pytest -q' \
   --typecheck 'python -m mypy src' \
   --managed-tools
 
-babysitter doctor
-babysitter start
+aletheia doctor
+aletheia start
 ```
 
-`init` writes `babysitter.json` and excludes `.babysitter/` and `.env` from Git.
+`init` writes `aletheia.json` and excludes `.aletheia/` and `.env` from Git.
 It does not overwrite existing configuration or guess verification commands.
 Commands are parsed into argv arrays and executed **without a shell**. Configure
 commands that genuinely cover your project; `true` is not meaningful evidence.
@@ -26,8 +26,8 @@ Use absolute executable paths if starting outside your project's virtualenv.
 
 - Default listener: `127.0.0.1:8030`.
 - Optional stronger model: `init --stronger-model MODEL` (same provider).
-- Provider credentials: environment variable `BABYSITTER_PROVIDER_API_KEY`.
-- Optional local server token: `BABYSITTER_LOCAL_TOKEN`.
+- Provider credentials: environment variable `ALETHEIA_PROVIDER_API_KEY`.
+- Optional local server token: `ALETHEIA_LOCAL_TOKEN`.
 - Binding `--host 0.0.0.0` **requires** a local token. Clients send
   `Authorization: Bearer TOKEN` or Anthropic's `x-api-key: TOKEN`.
 - `--root /path/to/project` is a global CLI option, before the subcommand.
@@ -42,9 +42,9 @@ No model-issued shell execution exists in managed mode.
 ```sh
 curl http://127.0.0.1:8030/v1/chat/completions \
   -H 'Content-Type: application/json' \
-  -H 'X-Babysitter-Execute: true' \
+  -H 'X-Aletheia-Execute: true' \
   -d '{
-    "model": "babysitter",
+    "model": "aletheia",
     "messages": [{"role":"user","content":"Fix the failing addition test in calc.py. Read the files first."}]
   }'
 ```
@@ -57,24 +57,24 @@ model. A verified batch advances the step and resets to the base model.
 
 ### Relay mode: existing coding client owns execution
 
-Without `X-Babysitter-Execute: true`, declared tools are **not** run locally:
+Without `X-Aletheia-Execute: true`, declared tools are **not** run locally:
 
 1. Send a normal protocol request with tool declarations.
 2. Receive schema-valid, policy-checked tool calls. State is `awaiting_tools`,
    **not** complete.
 3. Execute them in the target worktree. Return the normal tool-result messages,
-   the same tool declarations, and **`X-Babysitter-Task` from the response**.
-4. Babysitter independently runs checks before allowing a terminal answer.
+   the same tool declarations, and **`X-Aletheia-Task` from the response**.
+4. Aletheia independently runs checks before allowing a terminal answer.
    Failure may cause another clean tool-call response for your client to execute.
 
 Response headers:
 
 | Header | Meaning |
 | --- | --- |
-| `X-Babysitter-Task` | Persistent task identity; required on continuation |
-| `X-Babysitter-Session` | Session identity; optionally supply when creating a task |
-| `X-Babysitter-State` | `awaiting_tools`, `verified_complete`, etc. |
-| `X-Babysitter-Verified` | `true` only after terminal verification passes |
+| `X-Aletheia-Task` | Persistent task identity; required on continuation |
+| `X-Aletheia-Session` | Session identity; optionally supply when creating a task |
+| `X-Aletheia-State` | `awaiting_tools`, `verified_complete`, etc. |
+| `X-Aletheia-Verified` | `true` only after terminal verification passes |
 
 One outstanding task owns a project. A second task is rejected while a relay tool
 batch is pending. A process lock prevents two servers from supervising the same
@@ -95,7 +95,7 @@ and Anthropic `is_error` are recognized, and checks remain independent.
 - `POST /v1/messages`: Anthropic text, system text, tool_use/tool_result translated
   to the same single OpenAI-compatible upstream.
 - `GET /v1/models`: forwards that upstream's model listing.
-- Use `model: "babysitter"` or the configured base model. The runtime, not the
+- Use `model: "aletheia"` or the configured base model. The runtime, not the
   caller, selects the stronger model under the failure-counter rule.
 - `stream: true` is supported as **buffered SSE**, emitted only after validation
   and any required verification. It is deliberately not low-latency token relay.
@@ -112,14 +112,14 @@ request budget (`max_attempts`, default 6) is persistent across relay requests;
 ## Inspect evidence
 
 ```sh
-babysitter trace                         # all tasks, ordered events, checkpoint paths
-babysitter trace TASK_ID                 # one task
-babysitter trace TASK_ID --metrics
-babysitter trace TASK_ID --checkpoint CHECKPOINT_ID
+aletheia trace                         # all tasks, ordered events, checkpoint paths
+aletheia trace TASK_ID                 # one task
+aletheia trace TASK_ID --metrics
+aletheia trace TASK_ID --checkpoint CHECKPOINT_ID
 ```
 
-SQLite lives at `.babysitter/state.sqlite3`. Checkpoint manifests and file blobs
-live under `.babysitter/checkpoints/`. A failed snapshot remains inspectable after
+SQLite lives at `.aletheia/state.sqlite3`. Checkpoint manifests and file blobs
+live under `.aletheia/checkpoints/`. A failed snapshot remains inspectable after
 rollback. Preexisting dirty/untracked files and executable modes are preserved;
 Git index/history are never reset or stashed. Trace exposes command evidence,
 repairs, retries, actual selected models and changed files. Secrets are redacted
@@ -155,11 +155,11 @@ malformed tool call → repaired → file written → pytest FAIL
 ```
 
 The second variant proves `weak → weak → strong → weak` step-only escalation.
-Full traces and disposable demo repos stay in ignored `.babysitter/`; compact
+Full traces and disposable demo repos stay in ignored `.aletheia/`; compact
 reports are in `docs/*-results.json`.
 
 The same loop was also executed against actual ItsDangerous and Click suites.
 See [reproduction instructions and metrics](VALIDATION.md). Actual weak/free
 model performance and time saved versus a human baseline remain **unmeasured**.
 
-> Babysitter lets AI agents act autonomously without letting them fail silently.
+> Aletheia lets AI agents act autonomously without letting them fail silently.

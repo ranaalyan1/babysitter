@@ -15,12 +15,12 @@ from ..project import Project
 from ..state import uid
 
 EVENTS = ("SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure", "Stop", "SessionEnd")
-MARKER = "# babysitter:claude-hooks:v1"
+MARKER = "# aletheia:claude-hooks:v1"
 
 
 def settings_path(root: Path) -> Path:
     path = root / ".claude" / "settings.local.json"
-    for candidate in (root / ".babysitter", path.parent, path):
+    for candidate in (root / ".aletheia", path.parent, path):
         if candidate.is_symlink():
             raise ValueError(f"Refusing symlinked integration path: {candidate}")
     return path
@@ -68,18 +68,18 @@ def hook_timeout(config: Config) -> int:
 
 def command(root: Path, event: str) -> str:
     # Do NOT resolve a virtualenv interpreter symlink to the system Python.
-    argv = [str(Path(sys.executable).absolute()), "-m", "babysitter.adapters.claude", "--root", str(root), "--event", event]
+    argv = [str(Path(sys.executable).absolute()), "-m", "aletheia.adapters.claude", "--root", str(root), "--event", event]
     return (shlex.join(argv) + "; status=$?; if [ \"$status\" -ne 0 ]; then "
-            "printf '%s\\n' 'Babysitter hook failed. Task is NOT VERIFIED. Inspect installation and trace.' >&2; exit 2; fi; " + MARKER)
+            "printf '%s\\n' 'Aletheia hook failed. Task is NOT VERIFIED. Inspect installation and trace.' >&2; exit 2; fi; " + MARKER)
 
 
 def _save(root: Path, path: Path, before: dict, after: dict) -> str | None:
     if before == after:
         return None
-    backups = root / ".babysitter" / "install-backups"
+    backups = root / ".aletheia" / "install-backups"
     if backups.is_symlink():
         raise ValueError("Refusing symlinked backup directory")
-    (root / ".babysitter").mkdir(exist_ok=True, mode=0o700)
+    (root / ".aletheia").mkdir(exist_ok=True, mode=0o700)
     backups.mkdir(parents=True, exist_ok=True, mode=0o700)
     backup = backups / f"{uid()}.{path.name}"
     Project._durable_write(backup, path.read_bytes() if path.exists() else b"{}\n")
@@ -93,8 +93,8 @@ def _save(root: Path, path: Path, before: dict, after: dict) -> str | None:
 def install(root: Path) -> dict:
     root = root.resolve()
     path = settings_path(root)
-    if not (root / "babysitter.json").is_file():
-        raise ValueError("Run babysitter init with --test and --typecheck before installing the adapter")
+    if not (root / "aletheia.json").is_file():
+        raise ValueError("Run aletheia init with --test and --typecheck before installing the adapter")
     config = Config.load(root)
     try:
         top = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], cwd=root, stderr=subprocess.PIPE, text=True, timeout=10).strip()
@@ -121,7 +121,7 @@ def install(root: Path) -> dict:
     backup = _save(root, path, before, after)
     return {"installed": True, "changed": before != after, "settings": str(path), "backup": backup,
             "events": list(EVENTS), "claude_executable": shutil.which("claude"),
-            "next": "Start a fresh Claude Code session in this repository and check /hooks. No Babysitter server or provider is required."}
+            "next": "Start a fresh Claude Code session in this repository and check /hooks. No Aletheia server or provider is required."}
 
 
 def uninstall(root: Path) -> dict:
@@ -131,7 +131,7 @@ def uninstall(root: Path) -> dict:
     after = strip_owned(before)
     backup = _save(root, path, before, after)
     return {"installed": False, "changed": before != after, "settings": str(path), "backup": backup,
-            "retained": "All unrelated Claude settings and all Babysitter evidence/checkpoints"}
+            "retained": "All unrelated Claude settings and all Aletheia evidence/checkpoints"}
 
 
 def status(root: Path) -> dict:
@@ -139,8 +139,8 @@ def status(root: Path) -> dict:
     settings = read_settings(settings_path(root))
     config = Config.load(root)
     problems = []
-    if not (root / "babysitter.json").is_file():
-        problems.append("Missing babysitter.json; run babysitter init")
+    if not (root / "aletheia.json").is_file():
+        problems.append("Missing aletheia.json; run aletheia init")
     if not config.test_command or not config.typecheck_command:
         problems.append("Both verification commands must be configured")
     installed = []

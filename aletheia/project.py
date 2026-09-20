@@ -20,7 +20,7 @@ class Project:
         self.root = root.resolve()
         self.store = store
         self.max_bytes = max_bytes
-        self.directory = self.root / ".babysitter" / "checkpoints"
+        self.directory = self.root / ".aletheia" / "checkpoints"
         self.blobs = self.directory / "blobs"
         self.blobs.mkdir(parents=True, exist_ok=True, mode=0o700)
         top = self.git("rev-parse", "--show-toplevel").strip()
@@ -34,9 +34,9 @@ class Project:
 
     def safe_path(self, name: str, *, managed: bool = False, allow_leaf_symlink: bool = False) -> Path:
         relative = Path(name)
-        if not name or relative.is_absolute() or any(x in {"..", ".git", ".babysitter"} for x in relative.parts):
+        if not name or relative.is_absolute() or any(x in {"..", ".git", ".aletheia"} for x in relative.parts):
             raise UnsafePath(f"path outside supervised workspace or reserved: {name}")
-        if managed and (relative.name in {"babysitter.json", ".gitignore", ".env"} or relative.name.startswith(".env.")):
+        if managed and (relative.name in {"aletheia.json", ".gitignore", ".env"} or relative.name.startswith(".env.")):
             raise UnsafePath("runtime configuration, ignore policy and credential files are protected")
         target = self.root / relative
         for component in [*target.parents][:-1]:
@@ -61,7 +61,7 @@ class Project:
         names.update(extra_paths)
         entries, total = {}, 0
         for name in sorted(names):
-            if any(part in {".git", ".babysitter"} for part in Path(name).parts):
+            if any(part in {".git", ".aletheia"} for part in Path(name).parts):
                 continue
             path = self.safe_path(name, allow_leaf_symlink=True)
             if not path.exists() and not path.is_symlink():

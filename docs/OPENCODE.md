@@ -7,22 +7,22 @@ TUI integration, or a claim that every native action is intercepted.
 ## Setup and run
 
 Install/authenticate OpenCode through its official mechanism. Use a dedicated git
-worktree with a commit, install Babysitter, and configure meaningful checks:
+worktree with a commit, install Aletheia, and configure meaningful checks:
 
 ```sh
-babysitter init --test 'python -m pytest -q' --typecheck 'python -m mypy src'
+aletheia init --test 'python -m pytest -q' --typecheck 'python -m mypy src'
 # For an existing config, edit it rather than running init again.
-babysitter doctor --offline
-babysitter opencode status
-babysitter opencode run 'Fix the failing parser tests'
+aletheia doctor --offline
+aletheia opencode status
+aletheia opencode run 'Fix the failing parser tests'
 # Optional native selection and explicit executable:
-babysitter opencode run 'Fix the parser' \
+aletheia opencode run 'Fix the parser' \
   --executable /absolute/path/to/opencode --model provider/model --timeout 600
 ```
 
 No plugin/global configuration is installed, so there is no uninstall command.
 Normal `opencode` TUI invocations are **not supervised**. No proxy server or
-Babysitter provider credentials are needed. Native authentication, configured
+Aletheia provider credentials are needed. Native authentication, configured
 providers/models/plugins and permissions remain OpenCode's responsibility.
 The wrapper never passes `--auto`, `--attach`, `--share`, permission-bypass flags,
 or an agent override. Native noninteractive permission requests may be rejected
@@ -32,7 +32,7 @@ Only **wrapper exit 0 and `"verified": true`** mean successful supervision. Its
 final JSON includes task ID, native session ID, verification status and the final
 native text **only after** independent checks pass. Unverified model text is not
 streamed as a successful final answer. Full emitted observations are inspectable
-through `babysitter trace TASK_ID` and checkpoint inspection.
+through `aletheia trace TASK_ID` and checkpoint inspection.
 
 ## Lifecycle
 
@@ -60,7 +60,7 @@ resetting or stealing its ownership.
 Limits: 2 MB per JSONL line, 16 MB stdout/10,000 events per native invocation,
 `max_output_bytes` per persisted event/stderr preview, configurable per-invocation
 `--timeout` (default 600s). Verification command timeout is separate, from
-`babysitter.json`. No cost/token ceiling is inferred for native model calls.
+`aletheia.json`. No cost/token ceiling is inferred for native model calls.
 
 ## Limits you should rely on
 
@@ -79,7 +79,7 @@ processes. Use native permissions and a dedicated worktree.
 
 Repository verification configuration and named OpenCode config files are pinned
 per task; global native configuration and arbitrary plugin code are not a
-Babysitter policy boundary. Ignored/generated files are outside snapshot scope.
+Aletheia policy boundary. Ignored/generated files are outside snapshot scope.
 Checks prove configured tests, not every intended requirement or resistance to
 malicious edits to tests. Model effectiveness/time savings remain unmeasured.
 
@@ -87,8 +87,8 @@ malicious edits to tests. Model effectiveness/time savings remain unmeasured.
 
 ```sh
 python scripts/native_agents_demo.py opencode --executable /absolute/path/to/opencode \
-  --output .babysitter/opencode-report.json
-BABYSITTER_OPENCODE_BIN=/absolute/path/to/opencode pytest -q tests/test_native_agents.py
+  --output .aletheia/opencode-report.json
+ALETHEIA_OPENCODE_BIN=/absolute/path/to/opencode pytest -q tests/test_native_agents.py
 ```
 
 The fixture uses the actual OpenCode binary/tools, isolated home/XDG directories,

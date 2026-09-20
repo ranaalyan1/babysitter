@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from babysitter.repair import ToolError, clean_call, declarations
-from babysitter.tools import TOOLS
+from aletheia.repair import ToolError, clean_call, declarations
+from aletheia.tools import TOOLS
 from conftest import call
 
 

@@ -184,7 +184,7 @@
       }
     ],
     "checkpoint_count": 3,
-    "trace_file": "/home/user/validation-repos/itsdangerous/.babysitter/demo-ffbf067e2e3343bea2641b6ddb4d5e50.json"
+    "trace_file": "/home/user/validation-repos/itsdangerous/.aletheia/demo-ffbf067e2e3343bea2641b6ddb4d5e50.json"
   },
   {
     "fixture_provider": true,
@@ -371,6 +371,6 @@
       }
     ],
     "checkpoint_count": 3,
-    "trace_file": "/home/user/validation-repos/click/.babysitter/demo-208d17636729463e8a4637184e59581a.json"
+    "trace_file": "/home/user/validation-repos/click/.aletheia/demo-208d17636729463e8a4637184e59581a.json"
   }
 ]

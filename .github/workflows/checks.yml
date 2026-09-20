@@ -12,7 +12,7 @@ jobs:
           python-version: '3.11'
       - run: python -m pip install -e '.[dev]'
       - run: pytest -q
-      - run: mypy babysitter
+      - run: mypy aletheia
       - run: git diff --check
       # Official-agent tests skip unless their explicitly installed executable
       # environment variables are provided. Never inject real provider credentials.

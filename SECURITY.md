@@ -1,6 +1,6 @@
 # Security boundaries
 
-Babysitter executes configured verification commands in runtime modes. Treat the
+Aletheia executes configured verification commands in runtime modes. Treat the
 runtime as a trusted local process with access to the selected worktree—not as an
 OS sandbox. Use a dedicated worktree, review native permissions, and avoid
 untrusted hooks, plugins, tests and configuration.
@@ -10,7 +10,7 @@ untrusted hooks, plugins, tests and configuration.
 The v0.4 browser console has a separate, read-only FastAPI app. It never executes
 commands, starts agents, restores files, changes task states, runs migrations, or
 takes runtime ownership. Real non-loopback API access requires
-`BABYSITTER_UI_TOKEN`. Use HTTPS/private tunneling for remote viewing. Authorized
+`ALETHEIA_UI_TOKEN`. Use HTTPS/private tunneling for remote viewing. Authorized
 viewers can inspect source evidence; do not expose the console publicly.
 
 The browser keeps the console token only in memory. It is not a GitHub credential
@@ -25,7 +25,7 @@ only mode suitable for an unauthenticated public presentation preview.
 ## Protocol and native modes
 
 The protocol execution API remains separate and rejects browser-origin requests.
-Non-loopback binding requires `BABYSITTER_LOCAL_TOKEN`, independent of the console
+Non-loopback binding requires `ALETHEIA_LOCAL_TOKEN`, independent of the console
 token. Do not expose execution APIs or provider credentials publicly.
 
 Native hooks may be disabled, untrusted, skipped or timed out by their host.

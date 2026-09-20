@@ -32,7 +32,7 @@ async def run_command(argv: list[str], project: Project, timeout: float, limit: 
     # Python validates timestamp-based bytecode by whole-second mtime and size.
     # Rapid same-size edits/rollback can otherwise test yesterday's code. -B alone
     # only disables writes, not reads; a fresh prefix also isolates existing caches.
-    with tempfile.TemporaryDirectory(prefix="babysitter-verify-") as cache:
+    with tempfile.TemporaryDirectory(prefix="aletheia-verify-") as cache:
         env.update({"PYTHONPYCACHEPREFIX": cache, "PYTHONDONTWRITEBYTECODE": "1"})
         return await _run_command(argv, project, timeout, limit, env)
 

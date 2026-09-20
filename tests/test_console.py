@@ -7,8 +7,8 @@ import httpx
 import pytest
 from fastapi import HTTPException
 
-from babysitter.console import create_console, reader
-from babysitter.cli import main
+from aletheia.console import create_console, reader
+from aletheia.cli import main
 
 
 def client(root, *, demo=False, token=None, host='localhost'):
@@ -22,12 +22,12 @@ async def test_empty_workspace_does_not_create_state(tmp_path):
         assert response.json()['stats']['total'] == 0
         assert response.json()['mode'] == 'local'
         assert (await http.get('/')).status_code == 200
-    assert not (tmp_path / '.babysitter').exists()
+    assert not (tmp_path / '.aletheia').exists()
 
 
 async def test_demo_never_reads_project_files(tmp_path):
-    (tmp_path / 'babysitter.json').write_text('not json')
-    (tmp_path / '.babysitter').symlink_to('/not/a/real/path')
+    (tmp_path / 'aletheia.json').write_text('not json')
+    (tmp_path / '.aletheia').symlink_to('/not/a/real/path')
     async with client(tmp_path, demo=True, host='8040-preview.e2b.app') as http:
         data = (await http.get('/api/workspace')).json()
         assert data['mode'] == 'demo' and data['stats']['total'] == 8
@@ -97,7 +97,7 @@ async def test_symlinked_state_is_never_served(tmp_path):
     outside.mkdir()
     root = tmp_path / 'project'
     root.mkdir()
-    (root / '.babysitter').symlink_to(outside)
+    (root / '.aletheia').symlink_to(outside)
     async with client(root) as http:
         assert (await http.get('/api/workspace')).status_code == 409
 
@@ -156,10 +156,10 @@ async def test_task_list_limit_keeps_total_count(setup_runtime):
 
 
 def test_cli_refuses_public_real_console_without_token(tmp_path, monkeypatch, capsys):
-    monkeypatch.delenv('BABYSITTER_UI_TOKEN', raising=False)
+    monkeypatch.delenv('ALETHEIA_UI_TOKEN', raising=False)
     assert main(['--root',str(tmp_path),'ui','--host','0.0.0.0']) == 1
-    assert 'BABYSITTER_UI_TOKEN' in capsys.readouterr().err
-    assert not (tmp_path / '.babysitter').exists()
+    assert 'ALETHEIA_UI_TOKEN' in capsys.readouterr().err
+    assert not (tmp_path / '.aletheia').exists()
 
 
 async def test_no_provider_secrets_in_workspace(setup_runtime):
@@ -176,13 +176,13 @@ async def test_guides_and_brand_assets_are_packaged_offline(tmp_path):
         assert (await http.get('/assets/logo.svg')).status_code == 200
         assert (await http.get('/assets/manrope.woff2')).status_code == 200
         guide = await http.get('/guides/getting-started.md')
-        assert guide.status_code == 200 and 'babysitter ui' in guide.text
-        assert (await http.get('/guides/../../babysitter.json')).status_code == 404
+        assert guide.status_code == 200 and 'aletheia ui' in guide.text
+        assert (await http.get('/guides/../../aletheia.json')).status_code == 404
 
 
 def test_packaged_documentation_matches_sources():
     root = Path(__file__).resolve().parents[1]
-    directory = root / 'babysitter' / 'web' / 'guides'
+    directory = root / 'aletheia' / 'web' / 'guides'
     manifest = json.loads((directory / 'manifest.json').read_text())
     for name, entry in manifest.items():
         assert (directory / (name + '.md')).read_text() == (root / entry['source']).read_text(), 'Run python scripts/sync_console_docs.py'

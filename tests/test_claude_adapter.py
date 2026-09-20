@@ -12,10 +12,10 @@ from pathlib import Path
 
 import pytest
 
-from babysitter.adapters.claude import ClaudeAdapter, HookError, parse_event, hook_main
-from babysitter.adapters.claude_install import EVENTS, install, uninstall, status, owned
-from babysitter.cli import main
-from babysitter.metrics import metrics
+from aletheia.adapters.claude import ClaudeAdapter, HookError, parse_event, hook_main
+from aletheia.adapters.claude_install import EVENTS, install, uninstall, status, owned
+from aletheia.cli import main
+from aletheia.metrics import metrics
 
 BAD = 'def add(a: int, b: int) -> int:\n    return a - b\n'
 GOOD = 'def add(a: int, b: int) -> int:\n    # Corrected under supervision.\n    return a + b\n'
@@ -87,7 +87,7 @@ async def test_native_permissions_are_never_auto_approved(adapter):
     assert response == {}
 
 
-@pytest.mark.parametrize('path', ['/etc/passwd', '../escape.txt', '.git/config', '.babysitter/state.sqlite3', 'babysitter.json',
+@pytest.mark.parametrize('path', ['/etc/passwd', '../escape.txt', '.git/config', '.aletheia/state.sqlite3', 'aletheia.json',
                                  '.claude/settings.local.json', '.gitignore', '.env'])
 async def test_native_file_paths_are_guarded(adapter, path):
     await start(adapter)
@@ -137,7 +137,7 @@ async def test_missing_checks_are_explicitly_unavailable(adapter):
 
 async def test_control_tampering_never_executes_new_commands(adapter):
     task_id = await start(adapter)
-    (adapter.project.root / 'babysitter.json').write_text('{"test_command":["touch","SHOULD_NOT_EXIST"]}')
+    (adapter.project.root / 'aletheia.json').write_text('{"test_command":["touch","SHOULD_NOT_EXIST"]}')
     with pytest.raises(HookError, match='configuration changed'):
         await adapter.handle(event(adapter, 'Stop', stop_hook_active=False))
     assert not (adapter.project.root / 'SHOULD_NOT_EXIST').exists()
@@ -304,7 +304,7 @@ def test_adapter_version_keeps_core_schema_frozen(adapter):
 
 
 async def test_protocol_server_cannot_steal_an_active_native_task(adapter):
-    from babysitter.server import create_app
+    from aletheia.server import create_app
     from conftest import ScriptedProvider, answer
     task_id = await start(adapter)
     app = create_app(adapter.project.root, adapter.config, ScriptedProvider([answer()]))
@@ -324,7 +324,7 @@ async def test_metrics_do_not_infer_native_model_selection(adapter):
 
 
 def test_generated_command_quotes_paths_without_losing_virtualenv(adapter, tmp_path):
-    from babysitter.adapters.claude_install import command
+    from aletheia.adapters.claude_install import command
     root = tmp_path / "repo 'with spaces'"
     root.mkdir()
     handler = command(root, 'SessionStart')
@@ -338,8 +338,8 @@ def test_generated_command_quotes_paths_without_losing_virtualenv(adapter, tmp_p
 
 
 def test_missing_interpreter_wrapper_exits_two_not_fail_open(adapter):
-    from babysitter.adapters.claude_install import command
-    handler = command(adapter.project.root, 'Stop').replace(str(Path(sys.executable).absolute()), '/nonexistent/babysitter-python', 1)
+    from aletheia.adapters.claude_install import command
+    handler = command(adapter.project.root, 'Stop').replace(str(Path(sys.executable).absolute()), '/nonexistent/aletheia-python', 1)
     result = subprocess.run(handler, shell=True, input='{}', capture_output=True, text=True, timeout=10)
     assert result.returncode == 2
     assert 'NOT VERIFIED' in result.stderr

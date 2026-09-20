@@ -10,9 +10,9 @@ import pytest
 
 @pytest.mark.parametrize('agent', ['codex', 'opencode'])
 def test_official_cli_recovery(agent, tmp_path):
-    executable = os.environ.get(f'BABYSITTER_{agent.upper()}_BIN')
+    executable = os.environ.get(f'ALETHEIA_{agent.upper()}_BIN')
     if not executable:
-        pytest.skip(f'Set BABYSITTER_{agent.upper()}_BIN to an officially installed executable')
+        pytest.skip(f'Set ALETHEIA_{agent.upper()}_BIN to an officially installed executable')
     script = Path(__file__).resolve().parents[1] / 'scripts' / 'native_agents_demo.py'
     output = tmp_path / f'{agent}-report.json'
     result = subprocess.run([sys.executable, str(script), agent, '--executable', executable, '--output', str(output)],

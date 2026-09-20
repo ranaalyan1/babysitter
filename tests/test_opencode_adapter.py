@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from babysitter.adapters.opencode import AgentRunError, NativeTurn, supervise
-from babysitter.metrics import metrics
+from aletheia.adapters.opencode import AgentRunError, NativeTurn, supervise
+from aletheia.metrics import metrics
 from test_claude_adapter import BAD, GOOD
 
 
 def child(project, body):
-    path = project.root / '.babysitter' / 'agent-fixture'
+    path = project.root / '.aletheia' / 'agent-fixture'
     path.write_text(f'#!{sys.executable}\n' + '''import json, sys, time, pathlib, os
 prompt = sys.stdin.read()
 root = pathlib.Path.cwd()
@@ -90,7 +90,7 @@ async def test_rollback_baseline_cannot_earn_success(setup_runtime):
 async def test_controls_changed_by_native_process_halt_before_checks(setup_runtime):
     config, store, project, _ = setup_runtime
     config.save(project.root)
-    executable = child(project, "(root / 'babysitter.json').write_text('{}')\nemit('step_start'); emit('step_finish', reason='stop')")
+    executable = child(project, "(root / 'aletheia.json').write_text('{}')\nemit('step_start'); emit('step_finish', reason='stop')")
     result = await supervise(project, store, config, 'Fix', executable)
     assert not result['verified'] and 'configuration changed' in result['reason']
     assert not any(e['kind'] == 'verification.result' for e in store.trace()['events'])

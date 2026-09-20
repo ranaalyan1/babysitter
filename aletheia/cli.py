@@ -17,7 +17,7 @@ from .state import Store
 
 
 def parser() -> argparse.ArgumentParser:
-    cli = argparse.ArgumentParser(prog="babysitter", description="AI coding agents may claim success. Babysitter requires evidence.")
+    cli = argparse.ArgumentParser(prog="aletheia", description="AI coding agents may claim success. Aletheia requires evidence.")
     cli.add_argument("--root", type=Path, default=Path.cwd(), help="git repository root (default: current directory)")
     commands = cli.add_subparsers(dest="command", required=True)
     init = commands.add_parser("init", help="write local runtime configuration")
@@ -45,7 +45,7 @@ def parser() -> argparse.ArgumentParser:
     op_run = actions.add_parser("run", help="run, independently verify, and recover the same native session")
     op_run.add_argument("prompt")
     op_run.add_argument("--executable", default="opencode")
-    op_run.add_argument("--model", help="native provider/model selection; no Babysitter provider routing")
+    op_run.add_argument("--model", help="native provider/model selection; no Aletheia provider routing")
     op_run.add_argument("--timeout", type=float, default=600, help="maximum seconds per native agent invocation")
     op_status = actions.add_parser("status", help="check wrapper prerequisites")
     op_status.add_argument("--executable", default="opencode")
@@ -60,7 +60,7 @@ async def doctor(root: Path, config: Config, offline: bool) -> dict:
     checks = []
     def check(name, ok, detail):
         checks.append({"name": name, "ok": bool(ok), "detail": detail})
-    check("configuration", (root / "babysitter.json").is_file(), "babysitter.json")
+    check("configuration", (root / "aletheia.json").is_file(), "aletheia.json")
     try:
         result = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=root, capture_output=True, text=True, timeout=10)
         check("git-root", result.returncode == 0 and Path(result.stdout.strip()).resolve() == root, result.stdout.strip() or result.stderr.strip())
@@ -97,18 +97,18 @@ def main(argv: list[str] | None = None) -> int:
     root = args.root.resolve()
     try:
         if args.command == "init":
-            if (root / "babysitter.json").exists():
-                raise ValueError("babysitter.json already exists; edit it explicitly (init will not overwrite)")
+            if (root / "aletheia.json").exists():
+                raise ValueError("aletheia.json already exists; edit it explicitly (init will not overwrite)")
             config = Config(provider_url=args.provider_url, model=args.model, stronger_model=args.stronger_model,
                             test_command=shlex.split(args.test), typecheck_command=shlex.split(args.typecheck), allow_managed_tools=args.managed_tools)
             config.save(root)
             ignore = root / ".gitignore"
             content = ignore.read_text() if ignore.exists() else ""
-            for pattern in (".babysitter/", ".env"):
+            for pattern in (".aletheia/", ".env"):
                 if pattern not in content.splitlines():
                     content = content.rstrip("\n") + "\n" + pattern + "\n"
             ignore.write_text(content)
-            print("Created babysitter.json. Provider keys are read only from BABYSITTER_PROVIDER_API_KEY.")
+            print("Created aletheia.json. Provider keys are read only from ALETHEIA_PROVIDER_API_KEY.")
             if not config.test_command or not config.typecheck_command:
                 print("WARNING: missing test/typecheck commands; completion will be verification_unavailable.")
         elif args.command == "claude":
@@ -127,9 +127,9 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(report, indent=2))
             return 0 if report.get("verified", report.get("ok", False)) else 1
         elif args.command == "trace":
-            if not (root / ".babysitter" / "state.sqlite3").exists():
+            if not (root / ".aletheia" / "state.sqlite3").exists():
                 raise ValueError("No runtime state exists in this repository")
-            store = Store(root / ".babysitter")
+            store = Store(root / ".aletheia")
             try:
                 result = store.trace(args.task_id)
                 if args.task_id and not result["tasks"]:
@@ -155,8 +155,8 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(report, indent=2))
             return 0 if report["ok"] else 1
         elif args.command == "ui":
-            if not args.demo and args.host not in {"127.0.0.1", "localhost", "::1"} and not os.environ.get("BABYSITTER_UI_TOKEN"):
-                raise ValueError("Non-loopback real console access requires BABYSITTER_UI_TOKEN; use --demo for a safe public preview")
+            if not args.demo and args.host not in {"127.0.0.1", "localhost", "::1"} and not os.environ.get("ALETHEIA_UI_TOKEN"):
+                raise ValueError("Non-loopback real console access requires ALETHEIA_UI_TOKEN; use --demo for a safe public preview")
             import uvicorn
             from .console import create_console
             uvicorn.run(create_console(root, demo=args.demo), host=args.host, port=args.port)
@@ -169,7 +169,7 @@ def main(argv: list[str] | None = None) -> int:
             uvicorn.run(create_app(root, config), host=args.host, port=args.port, workers=1)
         return 0
     except (ValueError, OSError, subprocess.SubprocessError) as exc:
-        print(f"babysitter: {exc}", file=sys.stderr)
+        print(f"aletheia: {exc}", file=sys.stderr)
         return 1
 
 

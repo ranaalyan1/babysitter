@@ -1,5 +1,5 @@
 {
-  "name": "babysitter-console-browser-tests",
+  "name": "aletheia-console-browser-tests",
   "private": true,
   "description": "Optional development-only browser checks; no UI build required",
   "devDependencies": {

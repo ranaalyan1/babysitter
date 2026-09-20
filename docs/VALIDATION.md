@@ -71,7 +71,7 @@ reports describe this execution environment; they are not portable downloads.
 | Tasks completed on a real weak/free model | **Unmeasured**; requires an actual model endpoint |
 | Time saved versus manual recovery | **Unmeasured**; no timed human baseline |
 
-`babysitter trace --metrics` computes counts and denominators directly from the
+`aletheia trace --metrics` computes counts and denominators directly from the
 event log. Unavailable values are JSON `null`, not invented zeroes. Failed tasks
 remain in the success-rate denominator; active tasks are reported separately via
 total versus terminal task counts.
@@ -83,9 +83,9 @@ python -m venv .venv
 . .venv/bin/activate
 pip install -e '.[dev]'
 pytest -q
-mypy babysitter
-python scripts/demo.py --output .babysitter/demo-report.json
-python scripts/demo.py --fail-twice --output .babysitter/escalation-report.json
+mypy aletheia
+python scripts/demo.py --output .aletheia/demo-report.json
+python scripts/demo.py --fail-twice --output .aletheia/escalation-report.json
 ```
 
 For real projects, use disposable **clean** clones outside this runtime checkout:
@@ -97,7 +97,7 @@ git clone https://github.com/pallets/click.git ../validation-repos/click
 # For exact reproduction, check out the two detached revisions listed above.
 pip install -e ../validation-repos/itsdangerous -e ../validation-repos/click freezegun
 python scripts/validate_real_projects.py ../validation-repos \
-  --output .babysitter/real-project-report.json
+  --output .aletheia/real-project-report.json
 ```
 
 The real-project script rejects dirty checkouts, intentionally writes an injected
@@ -161,10 +161,10 @@ structure and independently verifies the actual filesystem after process exit.
 ### Reproduce current tests
 
 ```sh
-BABYSITTER_CLAUDE_BIN=/absolute/path/to/claude \
-BABYSITTER_CODEX_BIN=/absolute/path/to/codex \
-BABYSITTER_OPENCODE_BIN=/absolute/path/to/opencode pytest -q
-mypy babysitter
+ALETHEIA_CLAUDE_BIN=/absolute/path/to/claude \
+ALETHEIA_CODEX_BIN=/absolute/path/to/codex \
+ALETHEIA_OPENCODE_BIN=/absolute/path/to/opencode pytest -q
+mypy aletheia
 python scripts/native_agents_demo.py codex --executable /absolute/path/to/codex
 python scripts/native_agents_demo.py opencode --executable /absolute/path/to/opencode
 ```
@@ -178,14 +178,14 @@ process timeout, stale configuration and baseline-only false completion.
 
 For the real upstream suites, create **new clean disposable clones**, use the
 pinned detached revisions listed earlier, and install `freezegun` alongside the
-Babysitter dev/test dependencies. No editable upstream install is necessary:
+Aletheia dev/test dependencies. No editable upstream install is necessary:
 the fixture sets `PYTHONPATH` to that checkout's `src` for native verification.
 
 ```sh
 python scripts/native_agents_demo.py codex --executable /absolute/path/to/codex \
-  --project-path /path/to/disposable/itsdangerous --output .babysitter/codex-real.json
+  --project-path /path/to/disposable/itsdangerous --output .aletheia/codex-real.json
 python scripts/native_agents_demo.py opencode --executable /absolute/path/to/opencode \
-  --project-path /path/to/disposable/click --output .babysitter/opencode-real.json
+  --project-path /path/to/disposable/click --output .aletheia/opencode-real.json
 ```
 
 `--project-path` intentionally injects regressions. It accepts only the two named,

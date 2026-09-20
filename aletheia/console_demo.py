@@ -68,7 +68,7 @@ def create_demo() -> dict:
         tasks.append(summary)
         details[tid] = {"schema_version": 1, "task": summary, "events": events, "events_truncated": False, "checkpoints": cps}
         activity.extend(e for e in events if e["kind"] in {"task.finished", "verification.result", "rollback.completed", "retry.scheduled"})
-    return {"workspace": {"mode": "demo", "version": __version__, "project": "babysitter", "root": "Sample workspace · no real repository connected",
+    return {"workspace": {"mode": "demo", "version": __version__, "project": "aletheia", "root": "Sample workspace · no real repository connected",
              "stats": {"total": len(tasks), "verified": sum(t["state"] == "verified_complete" for t in tasks), "active": sum(t["state"] not in TERMINAL for t in tasks),
                        "failed": sum(t["state"] == "failed" for t in tasks), "caught": caught, "checkpoints": len(checkpoints)},
              "tasks": tasks, "tasks_truncated": False, "activity": sorted(activity, key=lambda e: e["timestamp"], reverse=True)[:8],

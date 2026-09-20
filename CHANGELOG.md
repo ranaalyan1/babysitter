@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0 — Aletheia: public release
+
+- Renamed from Babysitter to **Aletheia** (αλήθεια, “truth”) across the CLI
+  (`aletheia`), Python package, console UI, environment variables
+  (`ALETHEIA_*`), configuration (`aletheia.json`, `.aletheia/`) and docs.
+- Released under the Apache License 2.0 (`LICENSE`); packaging finalized with
+  classifiers, project URLs and the `aletheia-runtime` PyPI distribution.
+- Rebranded visual assets: wordmarks, banner, social card and console captures.
+- Version shown in the console footer and workspace page now tracks 1.0.0.
+
 ## 0.4.0 — Local console & visual identity
 
 - Original watchful-bracket logo, wordmarks, repository cover and brand guide.
